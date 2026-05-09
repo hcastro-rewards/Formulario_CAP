@@ -34,7 +34,7 @@ st.markdown("<p style='text-align: center; color: white; font-size: 1.2rem;'>Sis
 st.divider()
 
 # --- CONFIGURACIÓN DE ENLACES EXTERNOS ---
-ID_WEB_APP = "AKfycbzKCe7UZl8XdiZvlXFHysWk1nCSdi4TnCt5ANOY-4u_oghu9OHML41nsAapVOJynMMK"
+ID_WEB_APP = "AKfycbzmrdjPabfS00A-MRcZa99qADKJ3Y2Y4VtNaOrLVPJR8fvoHG_Ei8ndl-al3Vj06K7v"
 URL_BASE_GAS = f"https://script.google.com/macros/s/{ID_WEB_APP}/exec"
 URL_BASE_DATOS_GS = "https://docs.google.com/spreadsheets/d/186GinOg7PgFcp1g9LAmW32K5vlTEK8ChYjI3qnsf1-4/edit?usp=sharing"
 
@@ -99,8 +99,8 @@ if st.session_state['dict_hojas'] is None:
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("🚀 Iniciar Ruta", use_container_width=True):
-            with st.spinner("🔄 Sincronizando datos en vivo... esto puede tomar unos segundos."):
+        if st.button(" Iniciar Ruta", use_container_width=True):
+            with st.spinner(" Sincronizando datos en vivo... esto puede tomar unos segundos."):
                 match = re.search(r"/d/([a-zA-Z0-9-_]+)", URL_BASE_DATOS_GS)
                 if match:
                     sheet_id = match.group(1)
@@ -118,9 +118,9 @@ else:
     # Controles superiores
     col_estado, col_boton = st.columns([3, 1])
     with col_estado:
-        st.success("✅ Datos sincronizados correctamente. Trabajando en vivo.")
+        st.success(" Datos sincronizados correctamente. Trabajando en vivo.")
     with col_boton:
-        if st.button("🔄 Refrescar Datos"):
+        if st.button(" Refrescar Datos"):
             st.session_state['dict_hojas'] = None
             st.rerun()
             
