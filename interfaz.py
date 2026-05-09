@@ -34,9 +34,9 @@ st.markdown("<p style='text-align: center; color: white; font-size: 1.2rem;'>Sis
 st.divider()
 
 # --- CONFIGURACIÓN DE ENLACES EXTERNOS ---
-ID_WEB_APP = "AKfycbxZL8hCWSU3tYmSjr7oOSXIoPFpFITgqtNdTtmAOfma9k2kD4Lry17D5-PG4zVrsaTp"
+ID_WEB_APP = "AKfycbw3yOCcxwWnqhyScOijdArgQidTPhVL5PNbp26kD2Zd_sd4JBjcRV8K5OhmDfUxS1M"
 URL_BASE_GAS = f"https://script.google.com/macros/s/{ID_WEB_APP}/exec"
-URL_BASE_DATOS_GS = "https://docs.google.com/spreadsheets/d/1UkiKQwztdwnP-naxrfwu695D16oQwRUGiivHdbM6Vdk/edit?usp=sharing"
+URL_BASE_DATOS_GS = "https://docs.google.com/spreadsheets/d/186GinOg7PgFcp1g9LAmW32K5vlTEK8ChYjI3qnsf1-4/edit?usp=sharing"
 
 # --- FUNCIONES DE LIMPIEZA Y PROCESAMIENTO ---
 def limpiar(valor):
