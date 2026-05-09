@@ -33,9 +33,10 @@ st.markdown("<h1 style='text-align: center; color: white;'>BBVA</h1>", unsafe_al
 st.markdown("<p style='text-align: center; color: white; font-size: 1.2rem;'>Sistema de Rutas Inteligente</p>", unsafe_allow_html=True)
 st.divider()
 
-# --- CONFIGURACIÓN DEL RECEPTOR (APPS SCRIPT) ---
+# --- CONFIGURACIÓN DE ENLACES EXTERNOS ---
 ID_WEB_APP = "AKfycbxZL8hCWSU3tYmSjr7oOSXIoPFpFITgqtNdTtmAOfma9k2kD4Lry17D5-PG4zVrsaTp"
 URL_BASE_GAS = f"https://script.google.com/macros/s/{ID_WEB_APP}/exec"
+URL_BASE_DATOS_GS = "https://docs.google.com/spreadsheets/d/1UkiKQwztdwnP-naxrfwu695D16oQwRUGiivHdbM6Vdk/edit?usp=sharing"
 
 # --- FUNCIONES DE LIMPIEZA Y PROCESAMIENTO ---
 def limpiar(valor):
@@ -57,6 +58,7 @@ def procesar_fila(fila, nombre_cap):
     kam = limpiar(fila.get("KAM"))
     psi = limpiar(fila.get("PSI"))
     puntos = limpiar(fila.get("Puntos BBVA"))
+    tipo_local = limpiar(fila.get("Centro Comercial o P.C.")) 
 
     query = urllib.parse.quote(f"{marca} {direccion} {distrito} Lima Peru")
 
@@ -69,67 +71,113 @@ def procesar_fila(fila, nombre_cap):
         "kam": kam,
         "psi": psi,
         "puntos": puntos,
-        "cap": nombre_cap
+        "cap": nombre_cap,
+        "tipo_local": tipo_local 
     })
     magic_link = f"{URL_BASE_GAS}?{query_params}"
 
-    # Fórmulas de Excel (Se mantienen para el respaldo)
     maps_text = f'=HYPERLINK("{maps_url}", "LINK MAPS")'
     google_text = f'=HYPERLINK("{google_url}", "LINK GOOGLE")'
     magic_text = f'=HYPERLINK("{magic_link}", "AUTO-RELLENO")'
 
-    # Retornamos ambas versiones: fórmulas para excel y raw URLs para la web interactiva
     return pd.Series([maps_text, google_text, magic_text, maps_url, google_url, magic_link])
 
-# --- CARGA DE BASE MAESTRA ---
+# --- CARGA DE BASE MAESTRA LOCAL ---
 try:
     df_datos_base = pd.read_excel("data/Datos.xlsx", sheet_name="Datos")
 except FileNotFoundError:
     st.error("No se encontró el archivo base 'Datos.xlsx' en la carpeta 'data'.")
     st.stop()
 
-# --- INTERFAZ PRINCIPAL ---
-archivo = st.file_uploader("Sube tu archivo Excel", type=["xlsx"])
+# --- GESTIÓN DE SESIÓN Y SINCRONIZACIÓN EN VIVO ---
+if 'dict_hojas' not in st.session_state:
+    st.session_state['dict_hojas'] = None
 
-if archivo:
-    xl = pd.ExcelFile(archivo)
+# Si no hay datos en memoria, mostramos el botón de Iniciar Ruta
+if st.session_state['dict_hojas'] is None:
+    st.info("El sistema está listo para conectarse a la base de datos en la nube.")
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🚀 Iniciar Ruta", use_container_width=True):
+            with st.spinner("🔄 Sincronizando datos en vivo... esto puede tomar unos segundos."):
+                match = re.search(r"/d/([a-zA-Z0-9-_]+)", URL_BASE_DATOS_GS)
+                if match:
+                    sheet_id = match.group(1)
+                    excel_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=xlsx"
+                    try:
+                        st.session_state['dict_hojas'] = pd.read_excel(excel_url, sheet_name=None)
+                        st.rerun() # Forzamos la recarga para ocultar el botón y pasar a la app
+                    except Exception as e:
+                        st.error(f"Hubo un problema al descargar los datos: {e}")
+                else:
+                    st.error("El enlace de Google Sheet no es válido.")
+
+# --- INTERFAZ PRINCIPAL (Solo se muestra si hay datos sincronizados) ---
+else:
+    # Controles superiores
+    col_estado, col_boton = st.columns([3, 1])
+    with col_estado:
+        st.success("✅ Datos sincronizados correctamente. Trabajando en vivo.")
+    with col_boton:
+        if st.button("🔄 Refrescar Datos"):
+            st.session_state['dict_hojas'] = None
+            st.rerun()
+            
+    st.divider()
 
     # 1. Selección de hoja
     tipo_visita = st.radio(
         "¿Qué tipo de visita tienes?",
-        options=["PUERTA CALLE", "CENTRO COMERCIAL"],
+        options=["PUERTA CALLE", "CENTRO COMERCIAL", "CAPACITACIONES"],
         index=None
     )
 
     if tipo_visita:
-        nombre_hoja = "PC" if tipo_visita == "PUERTA CALLE" else "CC"
+        if tipo_visita == "PUERTA CALLE":
+            nombre_hoja = "PC"
+        elif tipo_visita == "CENTRO COMERCIAL":
+            nombre_hoja = "CC"
+        else:
+            nombre_hoja = "CAPACITACIONES"
         
-        try:
-            df = pd.read_excel(archivo, sheet_name=nombre_hoja)
-        except ValueError:
-            st.error(f"El archivo Excel subido no contiene la pestaña '{nombre_hoja}'. Revisa el formato.")
+        # Extraemos el DataFrame desde la memoria en lugar de leer el archivo nuevamente
+        df_sucio = st.session_state['dict_hojas'].get(nombre_hoja)
+        
+        if df_sucio is None:
+            st.error(f"El Google Sheet no contiene la pestaña '{nombre_hoja}'. Revisa el documento origen.")
             st.stop()
+            
+        # Trabajamos con una copia para no alterar la data original en memoria
+        df = df_sucio.copy()
 
-        # Reemplazo de columna para Centro Comercial
-        if nombre_hoja == "CC":
+        # --- Lógica específica por tipo de hoja ---
+        if nombre_hoja == "PC":
+            df['Centro Comercial o P.C.'] = "PUERTA CALLE"
+            
+        elif nombre_hoja == "CC":
             if "Centro Comercial o P.C." in df.columns:
                 df['Centro Comercial_norm'] = df['Centro Comercial o P.C.'].apply(normalizar_texto)
                 df_datos = df_datos_base.copy()
                 df_datos['Centro Comercial_norm'] = df_datos['Centro Comercial'].apply(normalizar_texto)
+
+                columnas_a_borrar = [col for col in ['Dirección', 'Distrito'] if col in df.columns]
+                if columnas_a_borrar:
+                    df = df.drop(columns=columnas_a_borrar)
 
                 df = df.merge(
                     df_datos[['Centro Comercial_norm', 'Dirección', 'Distrito']],
                     on='Centro Comercial_norm',
                     how='left'
                 )
-                df = df.drop(columns=['Centro Comercial o P.C.', 'Centro Comercial_norm'])
+                df = df.drop(columns=['Centro Comercial_norm'])
             else:
                 st.error("La hoja CC no contiene la columna 'Centro Comercial o P.C.'. Revisa tu archivo Excel.")
                 st.stop()
 
         # 2. Seguro Anti-Errores para Columna 'Fecha'
         if 'Fecha' not in df.columns:
-            st.error("El archivo Excel no contiene la columna 'Fecha'. Por favor, verifica el encabezado original.")
+            st.error("El archivo Google Sheet no contiene la columna 'Fecha'. Por favor, verifica el encabezado.")
             st.stop()
 
         hoy = datetime.now().date()
@@ -140,15 +188,17 @@ if archivo:
         if invalid_rows > 0:
             st.warning(f"Se descartaron {invalid_rows} filas por tener fechas o formatos inválidos.")
 
-        # Reordenar columnas
+        # Reordenar columnas con la nueva estructura
         columnas_finales = [
-            "KAM", "Marca", "PSI", "Puntos BBVA",
+            "KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.",
             "Dirección", "Distrito", "Indicaciones para Visitas",
             "Fecha", "CAP"
         ]
+        
         for col in columnas_finales:
             if col not in df.columns:
                 df[col] = "" 
+                
         df = df[columnas_finales]
 
         fechas_futuras = sorted([f for f in df['Fecha'].unique() if f >= hoy])
@@ -195,7 +245,6 @@ if archivo:
                                     "MAPS", 
                                     display_text="Ir a Maps"
                                 ),
-                                # Ocultamos las columnas que son exclusivas del Excel
                                 "Link MAPS (Excel)": None,
                                 "Link GOOGLE (Excel)": None,
                                 "Auto-Relleno (Excel)": None,
@@ -206,7 +255,6 @@ if archivo:
                         )
 
                         # 5. Exportar Excel tradicional
-                        # Limpiamos las URLs puras para que el Excel solo tenga las fórmulas
                         df_excel = df_final.drop(columns=['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC'])
                         
                         output = BytesIO()
