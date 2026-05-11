@@ -34,7 +34,7 @@ st.markdown("<p style='text-align: center; color: white; font-size: 1.2rem;'>Sis
 st.divider()
 
 # --- CONFIGURACIÓN DE ENLACES EXTERNOS ---
-ID_WEB_APP = "AKfycbzqU5846UTlsNLgJloiiAKihyTI9XXc7U9q4AGJSgZOl7OTAXm_kkEPEc1lbHReuoyu"
+ID_WEB_APP = "AKfycbwkEyeRS8OtJZzpvmBGw2NTQbAxUOMhp6orEtaFA63TcjO_73nOWxCvIqS1Gd7crt-d"
 URL_BASE_GAS = f"https://script.google.com/macros/s/{ID_WEB_APP}/exec"
 URL_BASE_DATOS_GS = "https://docs.google.com/spreadsheets/d/186GinOg7PgFcp1g9LAmW32K5vlTEK8ChYjI3qnsf1-4/edit?usp=sharing"
 
@@ -118,7 +118,7 @@ else:
     # Controles superiores
     col_estado, col_boton = st.columns([3, 1])
     with col_estado:
-        st.success(" Datos sincronizados correctamente. Trabajando en vivo.")
+        st.suess(" Datos sincronizados correctamente. Trabajando en vivo.")
     with col_boton:
         if st.button(" Refrescar Datos"):
             st.session_state['dict_hojas'] = None
@@ -135,9 +135,9 @@ else:
 
     if tipo_visita:
         if tipo_visita == "PUERTA CALLE":
-            nombre_hoja = "PC"
+            nombre_hoja = "PC 2026 - 2"
         elif tipo_visita == "CENTRO COMERCIAL":
-            nombre_hoja = "CC"
+            nombre_hoja = "CC 2026 - 2"
         else:
             nombre_hoja = "CAPACITACIONES"
         
@@ -152,10 +152,10 @@ else:
         df = df_sucio.copy()
 
         # --- Lógica específica por tipo de hoja ---
-        if nombre_hoja == "PC":
+        if nombre_hoja == "PC 2026 - 2":
             df['Centro Comercial o P.C.'] = "PUERTA CALLE"
             
-        elif nombre_hoja == "CC":
+        elif nombre_hoja == "CC 2026 - 2":
             if "Centro Comercial o P.C." in df.columns:
                 df['Centro Comercial_norm'] = df['Centro Comercial o P.C.'].apply(normalizar_texto)
                 df_datos = df_datos_base.copy()
