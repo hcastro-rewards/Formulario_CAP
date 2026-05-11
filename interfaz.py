@@ -118,7 +118,7 @@ else:
     # Controles superiores
     col_estado, col_boton = st.columns([3, 1])
     with col_estado:
-        st.suess(" Datos sincronizados correctamente. Trabajando en vivo.")
+        st.success(" Datos sincronizados correctamente. Trabajando en vivo.")
     with col_boton:
         if st.button(" Refrescar Datos"):
             st.session_state['dict_hojas'] = None
