@@ -35,7 +35,7 @@ st.divider()
 
 # --- CONFIGURACIÓN DE ENLACES EXTERNOS ---
 ID_WEB_APP = "AKfycby9p1sy34FDCAfrDYB5XiiNEp6KtjibujC91uH8J_dUJ2yJux3Okom64Jn_7jxVYvNl"
-URL_BASE_GAS = f"https://script.google.com/macros/s/{ID_WEB_APP}/exec"
+URL_BASE_GAS = f"https://script.google.com/macros/u/0/s/{ID_WEB_APP}/exec"
 URL_BASE_DATOS_GS = "https://docs.google.com/spreadsheets/d/186GinOg7PgFcp1g9LAmW32K5vlTEK8ChYjI3qnsf1-4/edit?usp=sharing"
 
 # --- FUNCIONES DE LIMPIEZA Y PROCESAMIENTO ---
