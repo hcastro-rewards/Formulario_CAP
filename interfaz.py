@@ -52,6 +52,7 @@ def normalizar_texto(texto):
     return texto
 
 def procesar_fila(fila, nombre_cap):
+    # Usamos .get() de forma segura, si la columna no existe (como en CAPACITACIONES) retornará ""
     marca = limpiar(fila.get("Marca"))
     direccion = limpiar(fila.get("Dirección"))
     distrito = limpiar(fila.get("Distrito"))
@@ -126,143 +127,149 @@ else:
             
     st.divider()
 
-    # 1. Selección de hoja
-    tipo_visita = st.radio(
-        "¿Qué tipo de visita tienes?",
-        options=["PUERTA CALLE", "CENTRO COMERCIAL", "CAPACITACIONES"],
-        index=None
-    )
+    # 1. Función auxiliar para extraer y unificar fechas válidas de las 3 hojas
+    hoy = datetime.now().date()
+    
+    def obtener_fechas_validas(df):
+        if df is None or 'Fecha' not in df.columns:
+            return set()
+        # Convertimos a datetime manejando errores y extraemos la fecha
+        fechas = pd.to_datetime(df['Fecha'], errors='coerce').dt.date
+        # Retornamos solo fechas mayores o iguales a hoy, ignorando nulos
+        return set(fechas[fechas >= hoy].dropna().unique())
 
-    if tipo_visita:
-        if tipo_visita == "PUERTA CALLE":
-            nombre_hoja = "PC 2026 - 2"
-        elif tipo_visita == "CENTRO COMERCIAL":
-            nombre_hoja = "CC 2026 - 2"
-        else:
-            nombre_hoja = "CAPACITACIONES"
+    # Extraemos los DataFrames crudos de la memoria
+    df_pc_raw = st.session_state['dict_hojas'].get("PC 2026 - 2")
+    df_cc_raw = st.session_state['dict_hojas'].get("CC 2026 - 2")
+    df_cap_raw = st.session_state['dict_hojas'].get("CAPACITACIONES")
+
+    # Recopilamos todas las fechas futuras combinadas
+    fechas_todas = set()
+    fechas_todas.update(obtener_fechas_validas(df_pc_raw))
+    fechas_todas.update(obtener_fechas_validas(df_cc_raw))
+    fechas_todas.update(obtener_fechas_validas(df_cap_raw))
+    
+    fechas_futuras = sorted(list(fechas_todas))
+
+    if not fechas_futuras:
+        st.warning("No hay rutas programadas para hoy o fechas futuras en ninguna de las bandejas.")
+    else:
+        # 2. Filtro Global Directo (Fecha y Nombre)
+        fecha_sel = st.selectbox("¿Qué fecha?", options=fechas_futuras, index=None)
         
-        # Extraemos el DataFrame desde la memoria en lugar de leer el archivo nuevamente
-        df_sucio = st.session_state['dict_hojas'].get(nombre_hoja)
-        
-        if df_sucio is None:
-            st.error(f"El Google Sheet no contiene la pestaña '{nombre_hoja}'. Revisa el documento origen.")
-            st.stop()
-            
-        # Trabajamos con una copia para no alterar la data original en memoria
-        df = df_sucio.copy()
+        if fecha_sel:
+            nombre_sel = st.radio(
+                "¿Cuál es tu nombre?", 
+                options=["Augusto", "Gustavo", "Harold", "Ivan", "Mateo"],
+                index=None
+            )
 
-        # --- Lógica específica por tipo de hoja ---
-        if nombre_hoja == "PC 2026 - 2":
-            df['Centro Comercial o P.C.'] = "PUERTA CALLE"
-            
-        elif nombre_hoja == "CC 2026 - 2":
-            if "Centro Comercial o P.C." in df.columns:
-                df['Centro Comercial_norm'] = df['Centro Comercial o P.C.'].apply(normalizar_texto)
-                df_datos = df_datos_base.copy()
-                df_datos['Centro Comercial_norm'] = df_datos['Centro Comercial'].apply(normalizar_texto)
-
-                columnas_a_borrar = [col for col in ['Dirección', 'Distrito'] if col in df.columns]
-                if columnas_a_borrar:
-                    df = df.drop(columns=columnas_a_borrar)
-
-                df = df.merge(
-                    df_datos[['Centro Comercial_norm', 'Dirección', 'Distrito']],
-                    on='Centro Comercial_norm',
-                    how='left'
-                )
-                df = df.drop(columns=['Centro Comercial_norm'])
-            else:
-                st.error("La hoja CC no contiene la columna 'Centro Comercial o P.C.'. Revisa tu archivo Excel.")
-                st.stop()
-
-        # 2. Seguro Anti-Errores para Columna 'Fecha'
-        if 'Fecha' not in df.columns:
-            st.error("El archivo Google Sheet no contiene la columna 'Fecha'. Por favor, verifica el encabezado.")
-            st.stop()
-
-        hoy = datetime.now().date()
-        df['Fecha'] = pd.to_datetime(df['Fecha'], errors='coerce').dt.date
-        invalid_rows = df['Fecha'].isna().sum()
-        df = df.dropna(subset=['Fecha'])
-
-        if invalid_rows > 0:
-            st.warning(f"Se descartaron {invalid_rows} filas por tener fechas o formatos inválidos.")
-
-        # Reordenar columnas con la nueva estructura
-        columnas_finales = [
-            "KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.",
-            "Dirección", "Distrito", "Indicaciones para Visitas",
-            "Fecha", "CAP"
-        ]
-        
-        for col in columnas_finales:
-            if col not in df.columns:
-                df[col] = "" 
+            if nombre_sel:
+                st.divider()
+                st.subheader("Panel de Ruta Interactivo (Directo en Web)")
+                st.info("Haz clic en 'Abrir Formulario' directamente desde las tablas para reportar tu visita.")
                 
-        df = df[columnas_finales]
+                encontro_datos = False # Bandera para saber si mostramos al menos 1 tabla
 
-        fechas_futuras = sorted([f for f in df['Fecha'].unique() if f >= hoy])
+                # --- Función interna para renderizar las tablas modulares sin repetir código ---
+                def mostrar_modulo(df_final, titulo):
+                    st.markdown(f"### 📍 {titulo}")
+                    st.success(f"Se encontraron {len(df_final)} locales para {titulo}.")
+                    
+                    # Generar los links
+                    columnas_generadas = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC']
+                    df_final[columnas_generadas] = df_final.apply(lambda x: procesar_fila(x, nombre_sel), axis=1)
 
-        if not fechas_futuras:
-            st.warning("No hay rutas programadas para hoy o fechas futuras.")
-        else:
-            fecha_sel = st.selectbox("¿Qué fecha?", options=fechas_futuras)
+                    # Configurar y mostrar el DataFrame
+                    st.dataframe(
+                        df_final,
+                        column_config={
+                            "URL_MAGIC": st.column_config.LinkColumn("REPORTAR VISITA", display_text="Abrir Formulario"),
+                            "URL_MAPS": st.column_config.LinkColumn("MAPS", display_text="Ir a Maps"),
+                            "Link MAPS (Excel)": None,
+                            "Link GOOGLE (Excel)": None,
+                            "Auto-Relleno (Excel)": None,
+                            "URL_GOOGLE": None
+                        },
+                        use_container_width=True,
+                        hide_index=True
+                    )
 
-            if fecha_sel:
-                # 3. Selección de CAP
-                nombre_sel = st.radio(
-                    "¿Cuál es tu nombre?",
-                    options=["Augusto", "Gustavo", "Harold", "Ivan", "Mateo"],
-                    index=None
-                )
+                    # Botón de descarga independiente para cada módulo
+                    df_excel = df_final.drop(columns=['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC'])
+                    output = BytesIO()
+                    df_excel.to_excel(output, index=False, engine='openpyxl')
+                    st.download_button(
+                        f"(Opcional) Descargar Excel - {titulo}",
+                        data=output.getvalue(),
+                        file_name=f"Ruta_{titulo.replace(' ', '_')}_{nombre_sel}_{fecha_sel}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key=f"btn_{titulo}" # Llave única para evitar errores de Streamlit
+                    )
+                    st.divider()
 
-                if nombre_sel:
-                    # Filtrado final
-                    df_final = df[(df['Fecha'] == fecha_sel) & (df['CAP'] == nombre_sel)].copy()
-
-                    if df_final.empty:
-                        st.info(f"No hay rutas para {nombre_sel} el {fecha_sel}.")
-                    else:
-                        st.success(f"Se encontraron {len(df_final)} locales para visitar.")
-
-                        # 4. Enriquecimiento con hipervínculos (Web y Excel)
-                        columnas_generadas = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC']
-                        df_final[columnas_generadas] = df_final.apply(lambda x: procesar_fila(x, nombre_sel), axis=1)
+                # --- MÓDULO 1: PUERTA CALLE ---
+                if df_pc_raw is not None and 'Fecha' in df_pc_raw.columns:
+                    df_pc = df_pc_raw.copy()
+                    df_pc['Fecha'] = pd.to_datetime(df_pc['Fecha'], errors='coerce').dt.date
+                    df_pc_filtrado = df_pc[(df_pc['Fecha'] == fecha_sel) & (df_pc['CAP'] == nombre_sel)].copy()
+                    
+                    if not df_pc_filtrado.empty:
+                        encontro_datos = True
+                        df_pc_filtrado['Centro Comercial o P.C.'] = "PUERTA CALLE"
                         
-                        st.divider()
-                        st.subheader("Panel de Ruta Interactivo (Directo en Web)")
-                        st.info("Haz clic en 'Abrir Formulario' directamente desde esta tabla para reportar tu visita sin descargar el Excel.")
-
-                        # Mostrar tabla configurada para Links Web
-                        st.dataframe(
-                            df_final,
-                            column_config={
-                                "URL_MAGIC": st.column_config.LinkColumn(
-                                    "REPORTAR VISITA", 
-                                    display_text="Abrir Formulario"
-                                ),
-                                "URL_MAPS": st.column_config.LinkColumn(
-                                    "MAPS", 
-                                    display_text="Ir a Maps"
-                                ),
-                                "Link MAPS (Excel)": None,
-                                "Link GOOGLE (Excel)": None,
-                                "Auto-Relleno (Excel)": None,
-                                "URL_GOOGLE": None
-                            },
-                            use_container_width=True,
-                            hide_index=True
-                        )
-
-                        # 5. Exportar Excel tradicional
-                        df_excel = df_final.drop(columns=['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC'])
+                        # Estandarizar orden de columnas para Puerta Calle
+                        columnas_pc = ["KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.", "Dirección", "Distrito", "Indicaciones para Visitas", "Fecha", "CAP"]
+                        for col in columnas_pc:
+                            if col not in df_pc_filtrado.columns: df_pc_filtrado[col] = ""
+                        df_pc_filtrado = df_pc_filtrado[columnas_pc]
                         
-                        output = BytesIO()
-                        df_excel.to_excel(output, index=False, engine='openpyxl')
-                        st.download_button(
-                            "(Opcional) Descargar Excel tradicional",
-                            data=output.getvalue(),
-                            file_name=f"Ruta_{nombre_sel}_{fecha_sel}.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                        )
-                        st.success("Archivo enriquecido listo por si lo necesitas offline.")
+                        mostrar_modulo(df_pc_filtrado, "PUERTA CALLE")
+
+                # --- MÓDULO 2: CENTRO COMERCIAL ---
+                if df_cc_raw is not None and 'Fecha' in df_cc_raw.columns:
+                    df_cc = df_cc_raw.copy()
+                    df_cc['Fecha'] = pd.to_datetime(df_cc['Fecha'], errors='coerce').dt.date
+                    df_cc_filtrado = df_cc[(df_cc['Fecha'] == fecha_sel) & (df_cc['CAP'] == nombre_sel)].copy()
+                    
+                    if not df_cc_filtrado.empty:
+                        encontro_datos = True
+                        # Aplicar lógica de cruce SOLO aquí
+                        if "Centro Comercial o P.C." in df_cc_filtrado.columns:
+                            df_cc_filtrado['Centro Comercial_norm'] = df_cc_filtrado['Centro Comercial o P.C.'].apply(normalizar_texto)
+                            df_datos = df_datos_base.copy()
+                            df_datos['Centro Comercial_norm'] = df_datos['Centro Comercial'].apply(normalizar_texto)
+
+                            columnas_a_borrar = [col for col in ['Dirección', 'Distrito'] if col in df_cc_filtrado.columns]
+                            if columnas_a_borrar:
+                                df_cc_filtrado = df_cc_filtrado.drop(columns=columnas_a_borrar)
+
+                            df_cc_filtrado = df_cc_filtrado.merge(
+                                df_datos[['Centro Comercial_norm', 'Dirección', 'Distrito']],
+                                on='Centro Comercial_norm',
+                                how='left'
+                            )
+                            df_cc_filtrado = df_cc_filtrado.drop(columns=['Centro Comercial_norm'])
+                        
+                        # Estandarizar orden de columnas para Centro Comercial
+                        columnas_cc = ["KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.", "Dirección", "Distrito", "Indicaciones para Visitas", "Fecha", "CAP"]
+                        for col in columnas_cc:
+                            if col not in df_cc_filtrado.columns: df_cc_filtrado[col] = ""
+                        df_cc_filtrado = df_cc_filtrado[columnas_cc]
+
+                        mostrar_modulo(df_cc_filtrado, "CENTRO COMERCIAL")
+
+                # --- MÓDULO 3: CAPACITACIONES ---
+                if df_cap_raw is not None and 'Fecha' in df_cap_raw.columns:
+                    df_cap = df_cap_raw.copy()
+                    df_cap['Fecha'] = pd.to_datetime(df_cap['Fecha'], errors='coerce').dt.date
+                    df_cap_filtrado = df_cap[(df_cap['Fecha'] == fecha_sel) & (df_cap['CAP'] == nombre_sel)].copy()
+                    
+                    if not df_cap_filtrado.empty:
+                        encontro_datos = True
+                        # Se manda directo con su estructura original, sin forzar columnas extras
+                        mostrar_modulo(df_cap_filtrado, "CAPACITACIONES")
+
+                # Mensaje por si el capacitador no tiene nada en las 3 hojas para ese día
+                if not encontro_datos:
+                    st.warning(f"No tienes rutas ni capacitaciones asignadas para el {fecha_sel}.")
