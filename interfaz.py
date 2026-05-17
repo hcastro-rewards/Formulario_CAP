@@ -50,7 +50,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.markdown("<p style='text-align: center; color: white; font-size: 1.2rem;'>Sistema de Rutas Inteligente</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: white; font-size: 2.2rem;'>Sistema de Rutas Inteligente</p>", unsafe_allow_html=True)
 st.divider()
 
 # --- CONFIGURACIÓN DE ENLACES EXTERNOS ---
