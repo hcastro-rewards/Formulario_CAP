@@ -7,17 +7,26 @@ from datetime import datetime
 from io import BytesIO
 
 # --- CONFIGURACIÓN DE PÁGINA CORPORATIVA ---
-st.set_page_config(page_title="BBVA - Sistema de Rutas", layout="wide")
+st.set_page_config(page_title="Rewards - Sistema de Rutas", layout="wide")
 
-# --- ESTILOS CSS PERSONALIZADOS (MODO AZUL INTENSO BBVA) ---
+# --- ESTILOS CSS PERSONALIZADOS (MODO AZUL INTENSO) ---
 st.markdown(
     """
     <style>
         .stApp { background-color: #072146; color: #FFFFFF !important; }
         [data-testid="stSidebar"] { background-color: #004481 !important; }
         h1, h2, h3, h4, p, label { color: #FFFFFF !important; }
+        
+        /* Botón estado normal */
         div.stButton > button:first-child { background-color: #004481 !important; color: #FFFFFF !important; border: 2px solid #FFFFFF; border-radius: 8px; font-weight: bold; }
-        div.stButton > button:first-child:hover { background-color: #FFFFFF !important; color: #004481 !important; }
+        
+        /* Botón estado hover / seleccionado (Celeste con letra blanca) */
+        div.stButton > button:first-child:hover, div.stButton > button:first-child:active, div.stButton > button:first-child:focus { 
+            background-color: #3498db !important; /* Color celeste */
+            color: #FFFFFF !important; 
+            border-color: #3498db !important; 
+        }
+        
         div[data-testid="stFileUploadDropzone"] div { color: #FFFFFF !important; }
         
         /* Ajuste para alertas y avisos */
@@ -29,7 +38,19 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.markdown("<h1 style='text-align: center; color: white;'>BBVA</h1>", unsafe_allow_html=True)
+# --- REEMPLAZO DEL TÍTULO POR EL LOGO DE REWARDS ---
+# IMPORTANTE: Reemplaza esta URL por el enlace RAW de tu imagen en GitHub
+URL_LOGO_REWARDS = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/LOGO_REWARDS.png"
+
+st.markdown(
+    f"""
+    <div style='text-align: center; margin-bottom: 10px;'>
+        <img src='{URL_LOGO_REWARDS}' width='300' alt='Logo Rewards'>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+
 st.markdown("<p style='text-align: center; color: white; font-size: 1.2rem;'>Sistema de Rutas Inteligente</p>", unsafe_allow_html=True)
 st.divider()
 
@@ -52,7 +73,6 @@ def normalizar_texto(texto):
     return texto
 
 def procesar_fila(fila, nombre_cap):
-    # Usamos .get() de forma segura, si la columna no existe (como en CAPACITACIONES) retornará ""
     marca = limpiar(fila.get("Marca"))
     direccion = limpiar(fila.get("Dirección"))
     distrito = limpiar(fila.get("Distrito"))
@@ -94,7 +114,6 @@ except FileNotFoundError:
 if 'dict_hojas' not in st.session_state:
     st.session_state['dict_hojas'] = None
 
-# Si no hay datos en memoria, mostramos el botón de Iniciar Ruta
 if st.session_state['dict_hojas'] is None:
     st.info("El sistema está listo para conectarse a la base de datos en la nube.")
     
@@ -108,15 +127,14 @@ if st.session_state['dict_hojas'] is None:
                     excel_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=xlsx"
                     try:
                         st.session_state['dict_hojas'] = pd.read_excel(excel_url, sheet_name=None)
-                        st.rerun() # Forzamos la recarga para ocultar el botón y pasar a la app
+                        st.rerun() 
                     except Exception as e:
                         st.error(f"Hubo un problema al descargar los datos: {e}")
                 else:
                     st.error("El enlace de Google Sheet no es válido.")
 
-# --- INTERFAZ PRINCIPAL (Solo se muestra si hay datos sincronizados) ---
+# --- INTERFAZ PRINCIPAL ---
 else:
-    # Controles superiores
     col_estado, col_boton = st.columns([3, 1])
     with col_estado:
         st.success(" Datos sincronizados correctamente. Trabajando en vivo.")
@@ -127,23 +145,18 @@ else:
             
     st.divider()
 
-    # 1. Función auxiliar para extraer y unificar fechas válidas de las 3 hojas
     hoy = datetime.now().date()
     
     def obtener_fechas_validas(df):
         if df is None or 'Fecha' not in df.columns:
             return set()
-        # Convertimos a datetime manejando errores y extraemos la fecha
         fechas = pd.to_datetime(df['Fecha'], errors='coerce').dt.date
-        # Retornamos solo fechas mayores o iguales a hoy, ignorando nulos
         return set(fechas[fechas >= hoy].dropna().unique())
 
-    # Extraemos los DataFrames crudos de la memoria
     df_pc_raw = st.session_state['dict_hojas'].get("PC 2026 - 2")
     df_cc_raw = st.session_state['dict_hojas'].get("CC 2026 - 2")
     df_cap_raw = st.session_state['dict_hojas'].get("CAPACITACIONES")
 
-    # Recopilamos todas las fechas futuras combinadas
     fechas_todas = set()
     fechas_todas.update(obtener_fechas_validas(df_pc_raw))
     fechas_todas.update(obtener_fechas_validas(df_cc_raw))
@@ -154,7 +167,6 @@ else:
     if not fechas_futuras:
         st.warning("No hay rutas programadas para hoy o fechas futuras en ninguna de las bandejas.")
     else:
-        # 2. Filtro Global Directo (Fecha y Nombre)
         fecha_sel = st.selectbox("¿Qué fecha?", options=fechas_futuras, index=None)
         
         if fecha_sel:
@@ -169,18 +181,15 @@ else:
                 st.subheader("Panel de Ruta Interactivo (Directo en Web)")
                 st.info("Haz clic en 'Abrir Formulario' directamente desde las tablas para reportar tu visita.")
                 
-                encontro_datos = False # Bandera para saber si mostramos al menos 1 tabla
+                encontro_datos = False 
 
-                # --- Función interna para renderizar las tablas modulares sin repetir código ---
                 def mostrar_modulo(df_final, titulo):
                     st.markdown(f"### 📍 {titulo}")
                     st.success(f"Se encontraron {len(df_final)} locales para {titulo}.")
                     
-                    # Generar los links
                     columnas_generadas = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC']
                     df_final[columnas_generadas] = df_final.apply(lambda x: procesar_fila(x, nombre_sel), axis=1)
 
-                    # Configurar y mostrar el DataFrame
                     st.dataframe(
                         df_final,
                         column_config={
@@ -195,7 +204,6 @@ else:
                         hide_index=True
                     )
 
-                    # Botón de descarga independiente para cada módulo
                     df_excel = df_final.drop(columns=['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC'])
                     output = BytesIO()
                     df_excel.to_excel(output, index=False, engine='openpyxl')
@@ -204,7 +212,7 @@ else:
                         data=output.getvalue(),
                         file_name=f"Ruta_{titulo.replace(' ', '_')}_{nombre_sel}_{fecha_sel}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        key=f"btn_{titulo}" # Llave única para evitar errores de Streamlit
+                        key=f"btn_{titulo}" 
                     )
                     st.divider()
 
@@ -218,7 +226,6 @@ else:
                         encontro_datos = True
                         df_pc_filtrado['Centro Comercial o P.C.'] = "PUERTA CALLE"
                         
-                        # Estandarizar orden de columnas para Puerta Calle
                         columnas_pc = ["KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.", "Dirección", "Distrito", "Indicaciones para Visitas", "Fecha", "CAP"]
                         for col in columnas_pc:
                             if col not in df_pc_filtrado.columns: df_pc_filtrado[col] = ""
@@ -234,7 +241,6 @@ else:
                     
                     if not df_cc_filtrado.empty:
                         encontro_datos = True
-                        # Aplicar lógica de cruce SOLO aquí
                         if "Centro Comercial o P.C." in df_cc_filtrado.columns:
                             df_cc_filtrado['Centro Comercial_norm'] = df_cc_filtrado['Centro Comercial o P.C.'].apply(normalizar_texto)
                             df_datos = df_datos_base.copy()
@@ -251,7 +257,6 @@ else:
                             )
                             df_cc_filtrado = df_cc_filtrado.drop(columns=['Centro Comercial_norm'])
                         
-                        # Estandarizar orden de columnas para Centro Comercial
                         columnas_cc = ["KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.", "Dirección", "Distrito", "Indicaciones para Visitas", "Fecha", "CAP"]
                         for col in columnas_cc:
                             if col not in df_cc_filtrado.columns: df_cc_filtrado[col] = ""
@@ -267,9 +272,7 @@ else:
                     
                     if not df_cap_filtrado.empty:
                         encontro_datos = True
-                        # Se manda directo con su estructura original, sin forzar columnas extras
                         mostrar_modulo(df_cap_filtrado, "CAPACITACIONES")
 
-                # Mensaje por si el capacitador no tiene nada en las 3 hojas para ese día
                 if not encontro_datos:
                     st.warning(f"No tienes rutas ni capacitaciones asignadas para el {fecha_sel}.")
