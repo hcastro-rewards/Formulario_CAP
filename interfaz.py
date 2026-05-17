@@ -39,8 +39,7 @@ st.markdown(
 )
 
 # --- REEMPLAZO DEL TÍTULO POR EL LOGO DE REWARDS ---
-# IMPORTANTE: Reemplaza esta URL por el enlace RAW de tu imagen en GitHub
-URL_LOGO_REWARDS = "https://github.com/hcastro-rewards/Formulario_CAP/blob/e093519064826ae8e0157e9511324d81a20d62aa/LOGO_REWARDS.png"
+URL_LOGO_REWARDS = "https://raw.githubusercontent.com/hcastro-rewards/Formulario_CAP/main/LOGO_REWARDS.png"
 
 st.markdown(
     f"""
