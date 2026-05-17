@@ -44,7 +44,7 @@ URL_LOGO_REWARDS = "https://raw.githubusercontent.com/hcastro-rewards/Formulario
 st.markdown(
     f"""
     <div style='text-align: center; margin-bottom: 10px;'>
-        <img src='{URL_LOGO_REWARDS}' width='300' alt='Logo Rewards'>
+        <img src='{URL_LOGO_REWARDS}' width='500' alt='Logo Rewards'>
     </div>
     """, 
     unsafe_allow_html=True
