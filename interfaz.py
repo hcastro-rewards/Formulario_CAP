@@ -22,8 +22,8 @@ st.markdown(
         
         /* Botón estado hover / seleccionado (Celeste con letra blanca) */
         div.stButton > button:first-child:hover, div.stButton > button:first-child:active, div.stButton > button:first-child:focus { 
-            background-color: #3498db !important; /* Color celeste */
-            color: #FFFFFF !important; 
+            background-color: #3498db !important;
+            color: #FFFFFF !important;
             border-color: #3498db !important; 
         }
         
@@ -50,7 +50,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.markdown("<p style='text-align: center; color: white; font-size: 2.2rem;'>Sistema de Rutas Inteligente</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: white; font-size: 1.2rem;'>Sistema de Rutas Inteligente</p>", unsafe_allow_html=True)
 st.divider()
 
 # --- CONFIGURACIÓN DE ENLACES EXTERNOS ---
@@ -192,8 +192,14 @@ else:
                     st.dataframe(
                         df_final,
                         column_config={
-                            "URL_MAGIC": st.column_config.LinkColumn("REPORTAR VISITA", display_text="Abrir Formulario"),
-                            "URL_MAPS": st.column_config.LinkColumn("MAPS", display_text="Ir a Maps"),
+                            "URL_MAGIC": st.column_config.LinkColumn(
+                                "REPORTAR VISITA", 
+                                display_text="[   COMPLETAR FORMULARIO   ]" 
+                            ),
+                            "URL_MAPS": st.column_config.LinkColumn(
+                                "MAPS", 
+                                display_text="[   ABRIR EN GOOGLE MAPS   ]" 
+                            ),
                             "Link MAPS (Excel)": None,
                             "Link GOOGLE (Excel)": None,
                             "Auto-Relleno (Excel)": None,
@@ -206,6 +212,7 @@ else:
                     df_excel = df_final.drop(columns=['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC'])
                     output = BytesIO()
                     df_excel.to_excel(output, index=False, engine='openpyxl')
+                    
                     st.download_button(
                         f"(Opcional) Descargar Excel - {titulo}",
                         data=output.getvalue(),
