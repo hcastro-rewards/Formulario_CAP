@@ -5,8 +5,9 @@ import unicodedata
 import re
 from datetime import datetime
 from io import BytesIO
+from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
-# --- CONFIGURACIÓN DE PÁGINA CORPORATIVA ---
+# --- CONFIGURACION DE PAGINA CORPORATIVA ---
 st.set_page_config(page_title="Rewards - Sistema de Rutas", layout="wide")
 
 # --- ESTILOS CSS PERSONALIZADOS (MODO AZUL INTENSO) ---
@@ -17,13 +18,13 @@ st.markdown(
         [data-testid="stSidebar"] { background-color: #004481 !important; }
         h1, h2, h3, h4, p, label { color: #FFFFFF !important; }
         
-        /* Botón estado normal */
+        /* Boton estado normal */
         div.stButton > button:first-child { background-color: #004481 !important; color: #FFFFFF !important; border: 2px solid #FFFFFF; border-radius: 8px; font-weight: bold; }
         
-        /* Botón estado hover / seleccionado (Celeste con letra blanca) */
+        /* Boton estado hover / seleccionado (Celeste con letra blanca) */
         div.stButton > button:first-child:hover, div.stButton > button:first-child:active, div.stButton > button:first-child:focus { 
-            background-color: #3498db !important; /* Color celeste */
-            color: #FFFFFF !important; 
+            background-color: #3498db !important;
+            color: #FFFFFF !important;
             border-color: #3498db !important; 
         }
         
@@ -38,7 +39,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- REEMPLAZO DEL TÍTULO POR EL LOGO DE REWARDS ---
+# --- REEMPLAZO DEL TITULO POR EL LOGO DE REWARDS ---
 URL_LOGO_REWARDS = "https://raw.githubusercontent.com/hcastro-rewards/Formulario_CAP/main/LOGO_REWARDS.png"
 
 st.markdown(
@@ -53,7 +54,7 @@ st.markdown(
 st.markdown("<p style='text-align: center; color: white; font-size: 1.2rem;'>Sistema de Rutas Inteligente</p>", unsafe_allow_html=True)
 st.divider()
 
-# --- CONFIGURACIÓN DE ENLACES EXTERNOS ---
+# --- CONFIGURACION DE ENLACES EXTERNOS ---
 ID_WEB_APP = "AKfycbzmhwXgNAGmoknSdl9rtaf2oNd93Ds_U_1CxleiuvZAmuK0iqwtHIEh4AgGR22gU139"
 URL_BASE_GAS = f"https://script.google.com/macros/s/{ID_WEB_APP}/exec"
 URL_BASE_DATOS_GS = "https://docs.google.com/spreadsheets/d/186GinOg7PgFcp1g9LAmW32K5vlTEK8ChYjI3qnsf1-4/edit?usp=sharing"
@@ -106,15 +107,15 @@ def procesar_fila(fila, nombre_cap):
 try:
     df_datos_base = pd.read_excel("data/Datos.xlsx", sheet_name="Datos")
 except FileNotFoundError:
-    st.error("No se encontró el archivo base 'Datos.xlsx' en la carpeta 'data'.")
+    st.error("No se encontro el archivo base 'Datos.xlsx' en la carpeta 'data'.")
     st.stop()
 
-# --- GESTIÓN DE SESIÓN Y SINCRONIZACIÓN EN VIVO ---
+# --- GESTION DE SESION Y SINCRONIZACION EN VIVO ---
 if 'dict_hojas' not in st.session_state:
     st.session_state['dict_hojas'] = None
 
 if st.session_state['dict_hojas'] is None:
-    st.info("El sistema está listo para conectarse a la base de datos en la nube.")
+    st.info("El sistema esta listo para conectarse a la base de datos en la nube.")
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
@@ -130,7 +131,7 @@ if st.session_state['dict_hojas'] is None:
                     except Exception as e:
                         st.error(f"Hubo un problema al descargar los datos: {e}")
                 else:
-                    st.error("El enlace de Google Sheet no es válido.")
+                    st.error("El enlace de Google Sheet no es valido.")
 
 # --- INTERFAZ PRINCIPAL ---
 else:
@@ -166,11 +167,11 @@ else:
     if not fechas_futuras:
         st.warning("No hay rutas programadas para hoy o fechas futuras en ninguna de las bandejas.")
     else:
-        fecha_sel = st.selectbox("¿Qué fecha?", options=fechas_futuras, index=None)
+        fecha_sel = st.selectbox("Que fecha?", options=fechas_futuras, index=None)
         
         if fecha_sel:
             nombre_sel = st.radio(
-                "¿Cuál es tu nombre?", 
+                "Cual es tu nombre?", 
                 options=["Augusto", "Gustavo", "Harold", "Ivan", "Mateo"],
                 index=None
             )
@@ -178,100 +179,33 @@ else:
             if nombre_sel:
                 st.divider()
                 st.subheader("Panel de Ruta Interactivo (Directo en Web)")
-                st.info("Haz clic en 'Abrir Formulario' directamente desde las tablas para reportar tu visita.")
+                st.info("Desliza hacia la derecha para encontrar los botones fijos de Visita y Maps.")
                 
                 encontro_datos = False 
 
                 def mostrar_modulo(df_final, titulo):
-                    st.markdown(f"### 📍 {titulo}")
+                    st.markdown(f"### {titulo}")
                     st.success(f"Se encontraron {len(df_final)} locales para {titulo}.")
                     
                     columnas_generadas = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC']
                     df_final[columnas_generadas] = df_final.apply(lambda x: procesar_fila(x, nombre_sel), axis=1)
 
-                    st.dataframe(
-                        df_final,
-                        column_config={
-                            "URL_MAGIC": st.column_config.LinkColumn("REPORTAR VISITA", display_text="Abrir Formulario"),
-                            "URL_MAPS": st.column_config.LinkColumn("MAPS", display_text="Ir a Maps"),
-                            "Link MAPS (Excel)": None,
-                            "Link GOOGLE (Excel)": None,
-                            "Auto-Relleno (Excel)": None,
-                            "URL_GOOGLE": None
-                        },
-                        use_container_width=True,
-                        hide_index=True
+                    # --- CONFIGURACION DE AGGRID (Estilo Hibrido y Auto-ajustado) ---
+                    gb = GridOptionsBuilder.from_dataframe(df_final)
+                    
+                    # 1. Ocultar columnas generadas que no se deben mostrar en la web
+                    cols_to_hide = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_GOOGLE']
+                    for col in cols_to_hide:
+                        gb.configure_column(col, hide=True)
+
+                    # 2. Configurar todas las columnas por defecto (sin filtros, sin menu, con tamaño de letra 13px)
+                    gb.configure_default_column(
+                        resizable=True, 
+                        filter=False, 
+                        sortable=False, 
+                        suppressMenu=True,
+                        cellStyle={'fontSize': '13px', 'whiteSpace': 'nowrap'} # Aplica 13px y fuerza a una sola linea
                     )
 
-                    df_excel = df_final.drop(columns=['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC'])
-                    output = BytesIO()
-                    df_excel.to_excel(output, index=False, engine='openpyxl')
-                    st.download_button(
-                        f"(Opcional) Descargar Excel - {titulo}",
-                        data=output.getvalue(),
-                        file_name=f"Ruta_{titulo.replace(' ', '_')}_{nombre_sel}_{fecha_sel}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        key=f"btn_{titulo}" 
-                    )
-                    st.divider()
-
-                # --- MÓDULO 1: PUERTA CALLE ---
-                if df_pc_raw is not None and 'Fecha' in df_pc_raw.columns:
-                    df_pc = df_pc_raw.copy()
-                    df_pc['Fecha'] = pd.to_datetime(df_pc['Fecha'], errors='coerce').dt.date
-                    df_pc_filtrado = df_pc[(df_pc['Fecha'] == fecha_sel) & (df_pc['CAP'] == nombre_sel)].copy()
-                    
-                    if not df_pc_filtrado.empty:
-                        encontro_datos = True
-                        df_pc_filtrado['Centro Comercial o P.C.'] = "PUERTA CALLE"
-                        
-                        columnas_pc = ["KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.", "Dirección", "Distrito", "Indicaciones para Visitas", "Fecha", "CAP"]
-                        for col in columnas_pc:
-                            if col not in df_pc_filtrado.columns: df_pc_filtrado[col] = ""
-                        df_pc_filtrado = df_pc_filtrado[columnas_pc]
-                        
-                        mostrar_modulo(df_pc_filtrado, "PUERTA CALLE")
-
-                # --- MÓDULO 2: CENTRO COMERCIAL ---
-                if df_cc_raw is not None and 'Fecha' in df_cc_raw.columns:
-                    df_cc = df_cc_raw.copy()
-                    df_cc['Fecha'] = pd.to_datetime(df_cc['Fecha'], errors='coerce').dt.date
-                    df_cc_filtrado = df_cc[(df_cc['Fecha'] == fecha_sel) & (df_cc['CAP'] == nombre_sel)].copy()
-                    
-                    if not df_cc_filtrado.empty:
-                        encontro_datos = True
-                        if "Centro Comercial o P.C." in df_cc_filtrado.columns:
-                            df_cc_filtrado['Centro Comercial_norm'] = df_cc_filtrado['Centro Comercial o P.C.'].apply(normalizar_texto)
-                            df_datos = df_datos_base.copy()
-                            df_datos['Centro Comercial_norm'] = df_datos['Centro Comercial'].apply(normalizar_texto)
-
-                            columnas_a_borrar = [col for col in ['Dirección', 'Distrito'] if col in df_cc_filtrado.columns]
-                            if columnas_a_borrar:
-                                df_cc_filtrado = df_cc_filtrado.drop(columns=columnas_a_borrar)
-
-                            df_cc_filtrado = df_cc_filtrado.merge(
-                                df_datos[['Centro Comercial_norm', 'Dirección', 'Distrito']],
-                                on='Centro Comercial_norm',
-                                how='left'
-                            )
-                            df_cc_filtrado = df_cc_filtrado.drop(columns=['Centro Comercial_norm'])
-                        
-                        columnas_cc = ["KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.", "Dirección", "Distrito", "Indicaciones para Visitas", "Fecha", "CAP"]
-                        for col in columnas_cc:
-                            if col not in df_cc_filtrado.columns: df_cc_filtrado[col] = ""
-                        df_cc_filtrado = df_cc_filtrado[columnas_cc]
-
-                        mostrar_modulo(df_cc_filtrado, "CENTRO COMERCIAL")
-
-                # --- MÓDULO 3: CAPACITACIONES ---
-                if df_cap_raw is not None and 'Fecha' in df_cap_raw.columns:
-                    df_cap = df_cap_raw.copy()
-                    df_cap['Fecha'] = pd.to_datetime(df_cap['Fecha'], errors='coerce').dt.date
-                    df_cap_filtrado = df_cap[(df_cap['Fecha'] == fecha_sel) & (df_cap['CAP'] == nombre_sel)].copy()
-                    
-                    if not df_cap_filtrado.empty:
-                        encontro_datos = True
-                        mostrar_modulo(df_cap_filtrado, "CAPACITACIONES")
-
-                if not encontro_datos:
-                    st.warning(f"No tienes rutas ni capacitaciones asignadas para el {fecha_sel}.")
+                    # 3. Asignar anchos minimos a columnas con texto largo para emular el comportamiento original (Opcion A)
+                    gb.configure_column("Dire
