@@ -205,19 +205,21 @@ else:
                         sortable=False, 
                         suppressMenu=True,
                         suppressMovable=True, # Bloquea el arrastrar y soltar columnas
-                        cellStyle={'fontSize': '14px', 'whiteSpace': 'nowrap', 'padding': '10px 15px'} # Tamaño 14px y respiro visual
+                        cellStyle={'fontSize': '14px', 'whiteSpace': 'normal', 'padding': '10px 15px'} # whiteSpace normal permite salto de linea
                     )
 
-                    # 3. Calculo matematico para ajustar el ancho basandose SOLO en la primera fila de datos (tu 2da fila visual)
+                    # 3. Calculo matematico para ajustar el ancho basandose SOLO en el encabezado
                     if not df_final.empty:
                         for col in df_final.columns:
                             if col not in cols_to_hide and col not in ["URL_MAGIC", "URL_MAPS"]:
-                                # Comparamos cuanto mide el titulo vs cuanto mide el dato de la primera fila
+                                # Tomamos la longitud estricta del titulo de la columna
                                 len_titulo = len(str(col))
-                                len_dato = len(str(df_final.iloc[0][col]))
-                                # Calculamos pixeles: el texto ganador * 9px por letra + 40px de espacio vacio
-                                ancho_final = max(len_titulo, len_dato) * 9 + 40
-                                gb.configure_column(col, width=ancho_final)
+                                
+                                # Ajuste de pixeles: longitud del encabezado * 11px por letra + 50px de espacio extra
+                                ancho_final = (len_titulo * 11) + 50
+                                
+                                # Aplicamos wrapText y autoHeight para que el contenido largo baje a la siguiente linea
+                                gb.configure_column(col, width=ancho_final, wrapText=True, autoHeight=True)
 
                     # 4. Inyeccion de JavaScript para botones HTML
                     cell_renderer_btns = JsCode('''
@@ -231,7 +233,6 @@ else:
                             
                             let label = params.colDef.headerName === "REPORTAR" ? "VISITA" : "MAPS";
                             let bgColor = params.colDef.headerName === "REPORTAR" ? "#004481" : "#3498db";
-                            
                             this.eGui.innerHTML = `
                              <a href="${params.value}" target="_blank" style="
                                 display: inline-block;
@@ -245,7 +246,7 @@ else:
                                 padding: 8px 0;
                                 font-size: 12px;
                                 line-height: 1;
-                             ">${label}</a>
+                            ">${label}</a>
                             `;
                         }
                         getGui() {
@@ -258,8 +259,8 @@ else:
                     gb.configure_column("URL_MAGIC", headerName="REPORTAR", cellRenderer=cell_renderer_btns, pinned='right', width=100)
                     gb.configure_column("URL_MAPS", headerName="UBICACION", cellRenderer=cell_renderer_btns, pinned='right', width=100)
 
-                    # Ajustar la altura de las filas para el "respiro" del padding
-                    gb.configure_grid_options(rowHeight=50, headerHeight=45) 
+                    # Ajustar la altura del encabezado
+                    gb.configure_grid_options(headerHeight=45) 
                     
                     gridOptions = gb.build()
 
