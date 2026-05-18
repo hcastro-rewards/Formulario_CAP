@@ -5,6 +5,7 @@ import unicodedata
 import re
 from datetime import datetime
 from io import BytesIO
+from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
 # --- CONFIGURACIÓN DE PÁGINA CORPORATIVA ---
 st.set_page_config(page_title="Rewards - Sistema de Rutas", layout="wide")
@@ -20,10 +21,10 @@ st.markdown(
         /* Botón estado normal */
         div.stButton > button:first-child { background-color: #004481 !important; color: #FFFFFF !important; border: 2px solid #FFFFFF; border-radius: 8px; font-weight: bold; }
         
-        /* Botón estado hover / seleccionado (Celeste con letra blanca) */
+        /* Botón estado hover / seleccionado */
         div.stButton > button:first-child:hover, div.stButton > button:first-child:active, div.stButton > button:first-child:focus { 
-            background-color: #3498db !important; /* Color celeste */
-            color: #FFFFFF !important; 
+            background-color: #3498db !important;
+            color: #FFFFFF !important;
             border-color: #3498db !important; 
         }
         
@@ -166,11 +167,11 @@ else:
     if not fechas_futuras:
         st.warning("No hay rutas programadas para hoy o fechas futuras en ninguna de las bandejas.")
     else:
-        fecha_sel = st.selectbox("¿Qué fecha?", options=fechas_futuras, index=None)
+        fecha_sel = st.selectbox("Que fecha?", options=fechas_futuras, index=None)
         
         if fecha_sel:
             nombre_sel = st.radio(
-                "¿Cuál es tu nombre?", 
+                "Cual es tu nombre?", 
                 options=["Augusto", "Gustavo", "Harold", "Ivan", "Mateo"],
                 index=None
             )
@@ -178,34 +179,81 @@ else:
             if nombre_sel:
                 st.divider()
                 st.subheader("Panel de Ruta Interactivo (Directo en Web)")
-                st.info("Haz clic en 'Abrir Formulario' directamente desde las tablas para reportar tu visita.")
                 
                 encontro_datos = False 
 
                 def mostrar_modulo(df_final, titulo):
-                    st.markdown(f"### 📍 {titulo}")
+                    st.markdown(f"### {titulo}")
                     st.success(f"Se encontraron {len(df_final)} locales para {titulo}.")
                     
                     columnas_generadas = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC']
                     df_final[columnas_generadas] = df_final.apply(lambda x: procesar_fila(x, nombre_sel), axis=1)
 
-                    st.dataframe(
+                    # --- CONFIGURACION DE AGGRID ---
+                    gb = GridOptionsBuilder.from_dataframe(df_final)
+                    
+                    # Ocultar columnas crudas
+                    cols_to_hide = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_GOOGLE']
+                    for col in cols_to_hide:
+                        gb.configure_column(col, hide=True)
+
+                    # Inyeccion de JavaScript para crear botones HTML reales
+                    cell_renderer_btns = JsCode('''
+                    class BtnCellRenderer {
+                        init(params) {
+                            this.eGui = document.createElement('div');
+                            this.eGui.style.display = 'flex';
+                            this.eGui.style.alignItems = 'center';
+                            this.eGui.style.justifyContent = 'center';
+                            this.eGui.style.height = '100%';
+                            
+                            let label = params.colDef.headerName === "REPORTAR" ? "VISITA" : "MAPS";
+                            let bgColor = params.colDef.headerName === "REPORTAR" ? "#004481" : "#3498db";
+                            
+                            this.eGui.innerHTML = `
+                             <a href="${params.value}" target="_blank" style="
+                                display: inline-block;
+                                width: 90%;
+                                background-color: ${bgColor};
+                                color: white;
+                                text-align: center;
+                                border-radius: 5px;
+                                text-decoration: none;
+                                font-weight: bold;
+                                padding: 6px 0;
+                                font-size: 11px;
+                                line-height: 1;
+                             ">${label}</a>
+                            `;
+                        }
+                        getGui() {
+                            return this.eGui;
+                        }
+                    }
+                    ''')
+
+                    # Configurar columnas de botones y anclarlas a la derecha
+                    gb.configure_column("URL_MAGIC", headerName="REPORTAR", cellRenderer=cell_renderer_btns, pinned='right', width=90, suppressMenu=True)
+                    gb.configure_column("URL_MAPS", headerName="UBICACION", cellRenderer=cell_renderer_btns, pinned='right', width=90, suppressMenu=True)
+
+                    gb.configure_default_column(resizable=True, filter=True, sortable=True)
+                    gb.configure_grid_options(rowHeight=45) 
+                    
+                    gridOptions = gb.build()
+
+                    AgGrid(
                         df_final,
-                        column_config={
-                            "URL_MAGIC": st.column_config.LinkColumn("REPORTAR VISITA", display_text="Abrir Formulario"),
-                            "URL_MAPS": st.column_config.LinkColumn("MAPS", display_text="Ir a Maps"),
-                            "Link MAPS (Excel)": None,
-                            "Link GOOGLE (Excel)": None,
-                            "Auto-Relleno (Excel)": None,
-                            "URL_GOOGLE": None
-                        },
-                        use_container_width=True,
-                        hide_index=True
+                        gridOptions=gridOptions,
+                        allow_unsafe_jscode=True, 
+                        fit_columns_on_grid_load=False, 
+                        theme='alpine' 
                     )
 
+                    # --- EXPORTAR A EXCEL ---
                     df_excel = df_final.drop(columns=['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC'])
                     output = BytesIO()
                     df_excel.to_excel(output, index=False, engine='openpyxl')
+                    
                     st.download_button(
                         f"(Opcional) Descargar Excel - {titulo}",
                         data=output.getvalue(),
