@@ -198,30 +198,20 @@ else:
                     for col in cols_to_hide:
                         gb.configure_column(col, hide=True)
 
-                    # 2. Configurar estilo por defecto: 14px, con padding amplio, sin filtros, INMOVIBLE
+                    # 2. Configurar estilo por defecto: FUERZA UN ANCHO MINIMO PARA EVITAR QUE SE APLASTE EN MÓVIL
                     gb.configure_default_column(
                         resizable=True, 
                         filter=False, 
                         sortable=False, 
                         suppressMenu=True,
-                        suppressMovable=True, # Bloquea el arrastrar y soltar columnas
-                        cellStyle={'fontSize': '14px', 'whiteSpace': 'normal', 'padding': '10px 15px'} # whiteSpace normal permite salto de linea
+                        suppressMovable=True, 
+                        minWidth=180,  # <-- ESTO OBLIGA A LA PANTALLA A CREAR SCROLL HORIZONTAL
+                        wrapText=True,
+                        autoHeight=True,
+                        cellStyle={'fontSize': '14px', 'whiteSpace': 'normal', 'padding': '10px 15px'} 
                     )
 
-                    # 3. Calculo matematico para ajustar el ancho basandose SOLO en el encabezado
-                    if not df_final.empty:
-                        for col in df_final.columns:
-                            if col not in cols_to_hide and col not in ["URL_MAGIC", "URL_MAPS"]:
-                                # Tomamos la longitud estricta del titulo de la columna
-                                len_titulo = len(str(col))
-                                
-                                # Ajuste de pixeles: longitud del encabezado * 11px por letra + 50px de espacio extra
-                                ancho_final = (len_titulo * 11) + 50
-                                
-                                # Aplicamos wrapText y autoHeight para que el contenido largo baje a la siguiente linea
-                                gb.configure_column(col, width=ancho_final, wrapText=True, autoHeight=True)
-
-                    # 4. Inyeccion de JavaScript para botones HTML
+                    # 3. Inyeccion de JavaScript para botones HTML
                     cell_renderer_btns = JsCode('''
                     class BtnCellRenderer {
                         init(params) {
@@ -255,12 +245,12 @@ else:
                     }
                     ''')
 
-                    # 5. Configurar columnas de botones (fijas a la derecha)
-                    gb.configure_column("URL_MAGIC", headerName="REPORTAR", cellRenderer=cell_renderer_btns, pinned='right', width=100)
-                    gb.configure_column("URL_MAPS", headerName="UBICACION", cellRenderer=cell_renderer_btns, pinned='right', width=100)
+                    # 4. Configurar columnas de botones (fijas a la derecha con ancho rigido)
+                    gb.configure_column("URL_MAGIC", headerName="REPORTAR", cellRenderer=cell_renderer_btns, pinned='right', width=100, minWidth=100, maxWidth=100)
+                    gb.configure_column("URL_MAPS", headerName="UBICAR", cellRenderer=cell_renderer_btns, pinned='right', width=100, minWidth=100, maxWidth=100)
 
-                    # Ajustar la altura del encabezado
-                    gb.configure_grid_options(headerHeight=45) 
+                    # Ajustar la altura del encabezado para que quepa bien el texto si salta de linea
+                    gb.configure_grid_options(headerHeight=50, rowHeight=60) 
                     
                     gridOptions = gb.build()
 
