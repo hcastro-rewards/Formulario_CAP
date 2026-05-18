@@ -5,9 +5,8 @@ import unicodedata
 import re
 from datetime import datetime
 from io import BytesIO
-from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
-# --- CONFIGURACION DE PAGINA CORPORATIVA ---
+# --- CONFIGURACIÓN DE PÁGINA CORPORATIVA ---
 st.set_page_config(page_title="Rewards - Sistema de Rutas", layout="wide")
 
 # --- ESTILOS CSS PERSONALIZADOS (MODO AZUL INTENSO) ---
@@ -18,13 +17,13 @@ st.markdown(
         [data-testid="stSidebar"] { background-color: #004481 !important; }
         h1, h2, h3, h4, p, label { color: #FFFFFF !important; }
         
-        /* Boton estado normal */
+        /* Botón estado normal */
         div.stButton > button:first-child { background-color: #004481 !important; color: #FFFFFF !important; border: 2px solid #FFFFFF; border-radius: 8px; font-weight: bold; }
         
-        /* Boton estado hover / seleccionado (Celeste con letra blanca) */
+        /* Botón estado hover / seleccionado (Celeste con letra blanca) */
         div.stButton > button:first-child:hover, div.stButton > button:first-child:active, div.stButton > button:first-child:focus { 
-            background-color: #3498db !important;
-            color: #FFFFFF !important;
+            background-color: #3498db !important; /* Color celeste */
+            color: #FFFFFF !important; 
             border-color: #3498db !important; 
         }
         
@@ -39,7 +38,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- REEMPLAZO DEL TITULO POR EL LOGO DE REWARDS ---
+# --- REEMPLAZO DEL TÍTULO POR EL LOGO DE REWARDS ---
 URL_LOGO_REWARDS = "https://raw.githubusercontent.com/hcastro-rewards/Formulario_CAP/main/LOGO_REWARDS.png"
 
 st.markdown(
@@ -54,7 +53,7 @@ st.markdown(
 st.markdown("<p style='text-align: center; color: white; font-size: 1.2rem;'>Sistema de Rutas Inteligente</p>", unsafe_allow_html=True)
 st.divider()
 
-# --- CONFIGURACION DE ENLACES EXTERNOS ---
+# --- CONFIGURACIÓN DE ENLACES EXTERNOS ---
 ID_WEB_APP = "AKfycbzmhwXgNAGmoknSdl9rtaf2oNd93Ds_U_1CxleiuvZAmuK0iqwtHIEh4AgGR22gU139"
 URL_BASE_GAS = f"https://script.google.com/macros/s/{ID_WEB_APP}/exec"
 URL_BASE_DATOS_GS = "https://docs.google.com/spreadsheets/d/186GinOg7PgFcp1g9LAmW32K5vlTEK8ChYjI3qnsf1-4/edit?usp=sharing"
@@ -107,15 +106,15 @@ def procesar_fila(fila, nombre_cap):
 try:
     df_datos_base = pd.read_excel("data/Datos.xlsx", sheet_name="Datos")
 except FileNotFoundError:
-    st.error("No se encontro el archivo base 'Datos.xlsx' en la carpeta 'data'.")
+    st.error("No se encontró el archivo base 'Datos.xlsx' en la carpeta 'data'.")
     st.stop()
 
-# --- GESTION DE SESION Y SINCRONIZACION EN VIVO ---
+# --- GESTIÓN DE SESIÓN Y SINCRONIZACIÓN EN VIVO ---
 if 'dict_hojas' not in st.session_state:
     st.session_state['dict_hojas'] = None
 
 if st.session_state['dict_hojas'] is None:
-    st.info("El sistema esta listo para conectarse a la base de datos en la nube.")
+    st.info("El sistema está listo para conectarse a la base de datos en la nube.")
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
@@ -131,7 +130,7 @@ if st.session_state['dict_hojas'] is None:
                     except Exception as e:
                         st.error(f"Hubo un problema al descargar los datos: {e}")
                 else:
-                    st.error("El enlace de Google Sheet no es valido.")
+                    st.error("El enlace de Google Sheet no es válido.")
 
 # --- INTERFAZ PRINCIPAL ---
 else:
@@ -167,11 +166,11 @@ else:
     if not fechas_futuras:
         st.warning("No hay rutas programadas para hoy o fechas futuras en ninguna de las bandejas.")
     else:
-        fecha_sel = st.selectbox("Que fecha?", options=fechas_futuras, index=None)
+        fecha_sel = st.selectbox("¿Qué fecha?", options=fechas_futuras, index=None)
         
         if fecha_sel:
             nombre_sel = st.radio(
-                "Cual es tu nombre?", 
+                "¿Cuál es tu nombre?", 
                 options=["Augusto", "Gustavo", "Harold", "Ivan", "Mateo"],
                 index=None
             )
@@ -179,85 +178,34 @@ else:
             if nombre_sel:
                 st.divider()
                 st.subheader("Panel de Ruta Interactivo (Directo en Web)")
-                st.info("Desliza hacia la derecha para encontrar los botones fijos de Visita y Maps.")
+                st.info("Haz clic en 'Abrir Formulario' directamente desde las tablas para reportar tu visita.")
                 
                 encontro_datos = False 
 
                 def mostrar_modulo(df_final, titulo):
-                    st.markdown(f"### {titulo}")
+                    st.markdown(f"### 📍 {titulo}")
                     st.success(f"Se encontraron {len(df_final)} locales para {titulo}.")
                     
                     columnas_generadas = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC']
                     df_final[columnas_generadas] = df_final.apply(lambda x: procesar_fila(x, nombre_sel), axis=1)
 
-                    # --- CONFIGURACION DE AGGRID (Estilo Hibrido) ---
-                    gb = GridOptionsBuilder.from_dataframe(df_final)
-                    
-                    # 1. Ocultar columnas generadas que no se deben mostrar en la web
-                    cols_to_hide = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_GOOGLE']
-                    for col in cols_to_hide:
-                        gb.configure_column(col, hide=True)
-
-                    # 2. Configurar todas las columnas por defecto (sin filtros, sin menu, reajustables como st.dataframe)
-                    gb.configure_default_column(resizable=True, filter=False, sortable=False, suppressMenu=True)
-
-                    # 3. Inyeccion de JavaScript para botones HTML
-                    cell_renderer_btns = JsCode('''
-                    class BtnCellRenderer {
-                        init(params) {
-                            this.eGui = document.createElement('div');
-                            this.eGui.style.display = 'flex';
-                            this.eGui.style.alignItems = 'center';
-                            this.eGui.style.justifyContent = 'center';
-                            this.eGui.style.height = '100%';
-                            
-                            let label = params.colDef.headerName === "REPORTAR" ? "VISITA" : "MAPS";
-                            let bgColor = params.colDef.headerName === "REPORTAR" ? "#004481" : "#3498db";
-                            
-                            this.eGui.innerHTML = `
-                             <a href="${params.value}" target="_blank" style="
-                                display: inline-block;
-                                width: 90%;
-                                background-color: ${bgColor};
-                                color: white;
-                                text-align: center;
-                                border-radius: 5px;
-                                text-decoration: none;
-                                font-weight: bold;
-                                padding: 6px 0;
-                                font-size: 11px;
-                                line-height: 1;
-                             ">${label}</a>
-                            `;
-                        }
-                        getGui() {
-                            return this.eGui;
-                        }
-                    }
-                    ''')
-
-                    # 4. Configurar solo las columnas de accion para que sean botones y queden ancladas
-                    gb.configure_column("URL_MAGIC", headerName="REPORTAR", cellRenderer=cell_renderer_btns, pinned='right', width=90)
-                    gb.configure_column("URL_MAPS", headerName="UBICACION", cellRenderer=cell_renderer_btns, pinned='right', width=90)
-
-                    # Ajuste de altura de fila para acomodar los botones
-                    gb.configure_grid_options(rowHeight=45) 
-                    
-                    gridOptions = gb.build()
-
-                    AgGrid(
+                    st.dataframe(
                         df_final,
-                        gridOptions=gridOptions,
-                        allow_unsafe_jscode=True, 
-                        fit_columns_on_grid_load=False, # Permite el scroll horizontal dejando columnas fijeza a la derecha
-                        theme='alpine' 
+                        column_config={
+                            "URL_MAGIC": st.column_config.LinkColumn("REPORTAR VISITA", display_text="Abrir Formulario"),
+                            "URL_MAPS": st.column_config.LinkColumn("MAPS", display_text="Ir a Maps"),
+                            "Link MAPS (Excel)": None,
+                            "Link GOOGLE (Excel)": None,
+                            "Auto-Relleno (Excel)": None,
+                            "URL_GOOGLE": None
+                        },
+                        use_container_width=True,
+                        hide_index=True
                     )
 
-                    # --- EXPORTAR A EXCEL ---
                     df_excel = df_final.drop(columns=['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC'])
                     output = BytesIO()
                     df_excel.to_excel(output, index=False, engine='openpyxl')
-                    
                     st.download_button(
                         f"(Opcional) Descargar Excel - {titulo}",
                         data=output.getvalue(),
@@ -267,7 +215,7 @@ else:
                     )
                     st.divider()
 
-                # --- MODULO 1: PUERTA CALLE ---
+                # --- MÓDULO 1: PUERTA CALLE ---
                 if df_pc_raw is not None and 'Fecha' in df_pc_raw.columns:
                     df_pc = df_pc_raw.copy()
                     df_pc['Fecha'] = pd.to_datetime(df_pc['Fecha'], errors='coerce').dt.date
@@ -284,7 +232,7 @@ else:
                         
                         mostrar_modulo(df_pc_filtrado, "PUERTA CALLE")
 
-                # --- MODULO 2: CENTRO COMERCIAL ---
+                # --- MÓDULO 2: CENTRO COMERCIAL ---
                 if df_cc_raw is not None and 'Fecha' in df_cc_raw.columns:
                     df_cc = df_cc_raw.copy()
                     df_cc['Fecha'] = pd.to_datetime(df_cc['Fecha'], errors='coerce').dt.date
@@ -315,7 +263,7 @@ else:
 
                         mostrar_modulo(df_cc_filtrado, "CENTRO COMERCIAL")
 
-                # --- MODULO 3: CAPACITACIONES ---
+                # --- MÓDULO 3: CAPACITACIONES ---
                 if df_cap_raw is not None and 'Fecha' in df_cap_raw.columns:
                     df_cap = df_cap_raw.copy()
                     df_cap['Fecha'] = pd.to_datetime(df_cap['Fecha'], errors='coerce').dt.date
