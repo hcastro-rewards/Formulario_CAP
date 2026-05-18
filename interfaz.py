@@ -208,4 +208,135 @@ else:
                     )
 
                     # 3. Asignar anchos minimos a columnas con texto largo para emular el comportamiento original (Opcion A)
-                    gb.configure_column("Dire
+                    gb.configure_column("Dirección", minWidth=450)
+                    gb.configure_column("Centro Comercial o P.C.", minWidth=250)
+                    gb.configure_column("Indicaciones para Visitas", minWidth=250)
+                    gb.configure_column("Marca", minWidth=180)
+                    gb.configure_column("Distrito", minWidth=150)
+
+                    # 4. Inyeccion de JavaScript para botones HTML
+                    cell_renderer_btns = JsCode('''
+                    class BtnCellRenderer {
+                        init(params) {
+                            this.eGui = document.createElement('div');
+                            this.eGui.style.display = 'flex';
+                            this.eGui.style.alignItems = 'center';
+                            this.eGui.style.justifyContent = 'center';
+                            this.eGui.style.height = '100%';
+                            
+                            let label = params.colDef.headerName === "REPORTAR" ? "VISITA" : "MAPS";
+                            let bgColor = params.colDef.headerName === "REPORTAR" ? "#004481" : "#3498db";
+                            
+                            this.eGui.innerHTML = `
+                             <a href="${params.value}" target="_blank" style="
+                                display: inline-block;
+                                width: 90%;
+                                background-color: ${bgColor};
+                                color: white;
+                                text-align: center;
+                                border-radius: 5px;
+                                text-decoration: none;
+                                font-weight: bold;
+                                padding: 6px 0;
+                                font-size: 11px;
+                                line-height: 1;
+                             ">${label}</a>
+                            `;
+                        }
+                        getGui() {
+                            return this.eGui;
+                        }
+                    }
+                    ''')
+
+                    # 5. Configurar solo las columnas de accion para que sean botones y queden ancladas
+                    gb.configure_column("URL_MAGIC", headerName="REPORTAR", cellRenderer=cell_renderer_btns, pinned='right', width=90)
+                    gb.configure_column("URL_MAPS", headerName="UBICACION", cellRenderer=cell_renderer_btns, pinned='right', width=90)
+
+                    # Ajuste de altura de fila para acomodar los botones
+                    gb.configure_grid_options(rowHeight=45) 
+                    
+                    gridOptions = gb.build()
+
+                    AgGrid(
+                        df_final,
+                        gridOptions=gridOptions,
+                        allow_unsafe_jscode=True, 
+                        fit_columns_on_grid_load=False, 
+                        theme='alpine' 
+                    )
+
+                    # --- EXPORTAR A EXCEL ---
+                    df_excel = df_final.drop(columns=['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC'])
+                    output = BytesIO()
+                    df_excel.to_excel(output, index=False, engine='openpyxl')
+                    
+                    st.download_button(
+                        f"(Opcional) Descargar Excel - {titulo}",
+                        data=output.getvalue(),
+                        file_name=f"Ruta_{titulo.replace(' ', '_')}_{nombre_sel}_{fecha_sel}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key=f"btn_{titulo}" 
+                    )
+                    st.divider()
+
+                # --- MODULO 1: PUERTA CALLE ---
+                if df_pc_raw is not None and 'Fecha' in df_pc_raw.columns:
+                    df_pc = df_pc_raw.copy()
+                    df_pc['Fecha'] = pd.to_datetime(df_pc['Fecha'], errors='coerce').dt.date
+                    df_pc_filtrado = df_pc[(df_pc['Fecha'] == fecha_sel) & (df_pc['CAP'] == nombre_sel)].copy()
+                    
+                    if not df_pc_filtrado.empty:
+                        encontro_datos = True
+                        df_pc_filtrado['Centro Comercial o P.C.'] = "PUERTA CALLE"
+                        
+                        columnas_pc = ["KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.", "Dirección", "Distrito", "Indicaciones para Visitas", "Fecha", "CAP"]
+                        for col in columnas_pc:
+                            if col not in df_pc_filtrado.columns: df_pc_filtrado[col] = ""
+                        df_pc_filtrado = df_pc_filtrado[columnas_pc]
+                        
+                        mostrar_modulo(df_pc_filtrado, "PUERTA CALLE")
+
+                # --- MODULO 2: CENTRO COMERCIAL ---
+                if df_cc_raw is not None and 'Fecha' in df_cc_raw.columns:
+                    df_cc = df_cc_raw.copy()
+                    df_cc['Fecha'] = pd.to_datetime(df_cc['Fecha'], errors='coerce').dt.date
+                    df_cc_filtrado = df_cc[(df_cc['Fecha'] == fecha_sel) & (df_cc['CAP'] == nombre_sel)].copy()
+                    
+                    if not df_cc_filtrado.empty:
+                        encontro_datos = True
+                        if "Centro Comercial o P.C." in df_cc_filtrado.columns:
+                            df_cc_filtrado['Centro Comercial_norm'] = df_cc_filtrado['Centro Comercial o P.C.'].apply(normalizar_texto)
+                            df_datos = df_datos_base.copy()
+                            df_datos['Centro Comercial_norm'] = df_datos['Centro Comercial'].apply(normalizar_texto)
+
+                            columnas_a_borrar = [col for col in ['Dirección', 'Distrito'] if col in df_cc_filtrado.columns]
+                            if columnas_a_borrar:
+                                df_cc_filtrado = df_cc_filtrado.drop(columns=columnas_a_borrar)
+
+                            df_cc_filtrado = df_cc_filtrado.merge(
+                                df_datos[['Centro Comercial_norm', 'Dirección', 'Distrito']],
+                                on='Centro Comercial_norm',
+                                how='left'
+                            )
+                            df_cc_filtrado = df_cc_filtrado.drop(columns=['Centro Comercial_norm'])
+                        
+                        columnas_cc = ["KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.", "Dirección", "Distrito", "Indicaciones para Visitas", "Fecha", "CAP"]
+                        for col in columnas_cc:
+                            if col not in df_cc_filtrado.columns: df_cc_filtrado[col] = ""
+                        df_cc_filtrado = df_cc_filtrado[columnas_cc]
+
+                        mostrar_modulo(df_cc_filtrado, "CENTRO COMERCIAL")
+
+                # --- MODULO 3: CAPACITACIONES ---
+                if df_cap_raw is not None and 'Fecha' in df_cap_raw.columns:
+                    df_cap = df_cap_raw.copy()
+                    df_cap['Fecha'] = pd.to_datetime(df_cap['Fecha'], errors='coerce').dt.date
+                    df_cap_filtrado = df_cap[(df_cap['Fecha'] == fecha_sel) & (df_cap['CAP'] == nombre_sel)].copy()
+                    
+                    if not df_cap_filtrado.empty:
+                        encontro_datos = True
+                        mostrar_modulo(df_cap_filtrado, "CAPACITACIONES")
+
+                if not encontro_datos:
+                    st.warning(f"No tienes rutas ni capacitaciones asignadas para el {fecha_sel}.")
