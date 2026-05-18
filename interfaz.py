@@ -190,29 +190,34 @@ else:
                     columnas_generadas = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC']
                     df_final[columnas_generadas] = df_final.apply(lambda x: procesar_fila(x, nombre_sel), axis=1)
 
-                    # --- CONFIGURACION DE AGGRID (Estilo Hibrido y Auto-ajustado) ---
+                    # --- CONFIGURACION DE AGGRID (Estilo Dataframe Nativo + Botones) ---
                     gb = GridOptionsBuilder.from_dataframe(df_final)
                     
-                    # 1. Ocultar columnas generadas que no se deben mostrar en la web
+                    # 1. Ocultar columnas generadas que no se deben mostrar
                     cols_to_hide = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_GOOGLE']
                     for col in cols_to_hide:
                         gb.configure_column(col, hide=True)
 
-                    # 2. Configurar todas las columnas por defecto (sin filtros, sin menu, con tamaño de letra 13px)
+                    # 2. Configurar estilo por defecto: 14px, con padding amplio, sin filtros, INMOVIBLE
                     gb.configure_default_column(
                         resizable=True, 
                         filter=False, 
                         sortable=False, 
                         suppressMenu=True,
-                        cellStyle={'fontSize': '13px', 'whiteSpace': 'nowrap'} # Aplica 13px y fuerza a una sola linea
+                        suppressMovable=True, # Bloquea el arrastrar y soltar columnas
+                        cellStyle={'fontSize': '14px', 'whiteSpace': 'nowrap', 'padding': '10px 15px'} # Tamaño 14px y respiro visual
                     )
 
-                    # 3. Asignar anchos minimos a columnas con texto largo para emular el comportamiento original (Opcion A)
-                    gb.configure_column("Dirección", minWidth=450)
-                    gb.configure_column("Centro Comercial o P.C.", minWidth=250)
-                    gb.configure_column("Indicaciones para Visitas", minWidth=250)
-                    gb.configure_column("Marca", minWidth=180)
-                    gb.configure_column("Distrito", minWidth=150)
+                    # 3. Calculo matematico para ajustar el ancho basandose SOLO en la primera fila de datos (tu 2da fila visual)
+                    if not df_final.empty:
+                        for col in df_final.columns:
+                            if col not in cols_to_hide and col not in ["URL_MAGIC", "URL_MAPS"]:
+                                # Comparamos cuanto mide el titulo vs cuanto mide el dato de la primera fila
+                                len_titulo = len(str(col))
+                                len_dato = len(str(df_final.iloc[0][col]))
+                                # Calculamos pixeles: el texto ganador * 9px por letra + 40px de espacio vacio
+                                ancho_final = max(len_titulo, len_dato) * 9 + 40
+                                gb.configure_column(col, width=ancho_final)
 
                     # 4. Inyeccion de JavaScript para botones HTML
                     cell_renderer_btns = JsCode('''
@@ -237,8 +242,8 @@ else:
                                 border-radius: 5px;
                                 text-decoration: none;
                                 font-weight: bold;
-                                padding: 6px 0;
-                                font-size: 11px;
+                                padding: 8px 0;
+                                font-size: 12px;
                                 line-height: 1;
                              ">${label}</a>
                             `;
@@ -249,12 +254,12 @@ else:
                     }
                     ''')
 
-                    # 5. Configurar solo las columnas de accion para que sean botones y queden ancladas
-                    gb.configure_column("URL_MAGIC", headerName="REPORTAR", cellRenderer=cell_renderer_btns, pinned='right', width=90)
-                    gb.configure_column("URL_MAPS", headerName="UBICACION", cellRenderer=cell_renderer_btns, pinned='right', width=90)
+                    # 5. Configurar columnas de botones (fijas a la derecha)
+                    gb.configure_column("URL_MAGIC", headerName="REPORTAR", cellRenderer=cell_renderer_btns, pinned='right', width=100)
+                    gb.configure_column("URL_MAPS", headerName="UBICACION", cellRenderer=cell_renderer_btns, pinned='right', width=100)
 
-                    # Ajuste de altura de fila para acomodar los botones
-                    gb.configure_grid_options(rowHeight=45) 
+                    # Ajustar la altura de las filas para el "respiro" del padding
+                    gb.configure_grid_options(rowHeight=50, headerHeight=45) 
                     
                     gridOptions = gb.build()
 
@@ -262,7 +267,7 @@ else:
                         df_final,
                         gridOptions=gridOptions,
                         allow_unsafe_jscode=True, 
-                        fit_columns_on_grid_load=False, 
+                        fit_columns_on_grid_load=False, # Mantiene el scroll libre
                         theme='alpine' 
                     )
 
