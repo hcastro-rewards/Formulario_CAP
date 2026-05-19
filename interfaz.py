@@ -168,9 +168,10 @@ else:
         # Recuperamos el objeto "date" real asociado a la selección del usuario
         fecha_sel = opciones_fechas[fecha_str]
         
+        # --- AQUÍ SE AGREGÓ A FLOR EN LA LISTA FIJA ---
         nombre_sel = st.radio(
             "Cual es tu nombre?", 
-            options=["Augusto", "Gustavo", "Harold", "Ivan", "Mateo"],
+            options=["Augusto", "Flor", "Gustavo", "Harold", "Ivan", "Mateo"],
             index=None
         )
 
