@@ -3,7 +3,7 @@ import pandas as pd
 import urllib.parse
 import unicodedata
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
@@ -145,208 +145,207 @@ else:
             
     st.divider()
 
-    hoy = datetime.now().date()
-    
-    def obtener_fechas_validas(df):
-        if df is None or 'Fecha' not in df.columns:
-            return set()
-        fechas = pd.to_datetime(df['Fecha'], errors='coerce').dt.date
-        return set(fechas[fechas >= hoy].dropna().unique())
-
+    # Extraer las hojas de datos
     df_pc_raw = st.session_state['dict_hojas'].get("PC 2026 - 2")
     df_cc_raw = st.session_state['dict_hojas'].get("CC 2026 - 2")
     df_cap_raw = st.session_state['dict_hojas'].get("CAPACITACIONES")
 
-    fechas_todas = set()
-    fechas_todas.update(obtener_fechas_validas(df_pc_raw))
-    fechas_todas.update(obtener_fechas_validas(df_cc_raw))
-    fechas_todas.update(obtener_fechas_validas(df_cap_raw))
+    # --- NUEVA LÓGICA DE FECHAS RELATIVAS ---
+    hoy = datetime.now().date()
+    ayer = hoy - timedelta(days=1)
+    manana = hoy + timedelta(days=1)
+
+    # Creamos un diccionario para mostrar el texto bonito pero usar la fecha exacta por detrás
+    opciones_fechas = {
+        f"Ayer ({ayer.strftime('%Y-%m-%d')})": ayer,
+        f"Hoy ({hoy.strftime('%Y-%m-%d')})": hoy,
+        f"Mañana ({manana.strftime('%Y-%m-%d')})": manana
+    }
+
+    fecha_str = st.selectbox("Que fecha?", options=list(opciones_fechas.keys()), index=None)
     
-    fechas_futuras = sorted(list(fechas_todas))
-
-    if not fechas_futuras:
-        st.warning("No hay rutas programadas para hoy o fechas futuras en ninguna de las bandejas.")
-    else:
-        fecha_sel = st.selectbox("Que fecha?", options=fechas_futuras, index=None)
+    if fecha_str:
+        # Recuperamos el objeto "date" real asociado a la selección del usuario
+        fecha_sel = opciones_fechas[fecha_str]
         
-        if fecha_sel:
-            nombre_sel = st.radio(
-                "Cual es tu nombre?", 
-                options=["Augusto", "Gustavo", "Harold", "Ivan", "Mateo"],
-                index=None
-            )
+        nombre_sel = st.radio(
+            "Cual es tu nombre?", 
+            options=["Augusto", "Gustavo", "Harold", "Ivan", "Mateo"],
+            index=None
+        )
 
-            if nombre_sel:
-                st.divider()
-                st.subheader("Panel de Ruta Interactivo (Directo en Web)")
-                st.info("Desliza hacia la derecha para encontrar los botones fijos de Visita y Maps.")
+        if nombre_sel:
+            st.divider()
+            st.subheader("Panel de Ruta Interactivo (Directo en Web)")
+            st.info("Desliza hacia la derecha para encontrar los botones fijos de Visita y Maps.")
+            
+            encontro_datos = False 
+
+            def mostrar_modulo(df_final, titulo):
+                st.markdown(f"### {titulo}")
+                st.success(f"Se encontraron {len(df_final)} locales para {titulo}.")
                 
-                encontro_datos = False 
+                columnas_generadas = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC']
+                df_final[columnas_generadas] = df_final.apply(lambda x: procesar_fila(x, nombre_sel), axis=1)
 
-                def mostrar_modulo(df_final, titulo):
-                    st.markdown(f"### {titulo}")
-                    st.success(f"Se encontraron {len(df_final)} locales para {titulo}.")
-                    
-                    columnas_generadas = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC']
-                    df_final[columnas_generadas] = df_final.apply(lambda x: procesar_fila(x, nombre_sel), axis=1)
+                # --- CONFIGURACION DE AGGRID (Estilo Dataframe Nativo + Botones) ---
+                gb = GridOptionsBuilder.from_dataframe(df_final)
+                
+                # 1. Ocultar columnas generadas e internas + Columnas innecesarias solicitadas para la Web
+                cols_to_hide = [
+                    'Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_GOOGLE',
+                    'Indicaciones para Visitas', 'Fecha', 'CAP'
+                ]
+                for col in cols_to_hide:
+                    gb.configure_column(col, hide=True)
 
-                    # --- CONFIGURACION DE AGGRID (Estilo Dataframe Nativo + Botones) ---
-                    gb = GridOptionsBuilder.from_dataframe(df_final)
-                    
-                    # 1. Ocultar columnas generadas e internas + Columnas innecesarias solicitadas para la Web
-                    cols_to_hide = [
-                        'Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_GOOGLE',
-                        'Indicaciones para Visitas', 'Fecha', 'CAP'
-                    ]
-                    for col in cols_to_hide:
-                        gb.configure_column(col, hide=True)
+                # 2. Configurar estilo por defecto: FUERZA UN ANCHO MINIMO PARA EVITAR QUE SE APLASTE EN MÓVIL
+                gb.configure_default_column(
+                    resizable=True, 
+                    filter=False, 
+                    sortable=False, 
+                    suppressMenu=True,
+                    suppressMovable=True, 
+                    minWidth=180,  # <-- OBLIGA A LA PANTALLA A CREAR SCROLL HORIZONTAL
+                    wrapText=True,
+                    autoHeight=True,
+                    cellStyle={'fontSize': '14px', 'whiteSpace': 'normal', 'padding': '10px 15px'} 
+                )
 
-                    # 2. Configurar estilo por defecto: FUERZA UN ANCHO MINIMO PARA EVITAR QUE SE APLASTE EN MÓVIL
-                    gb.configure_default_column(
-                        resizable=True, 
-                        filter=False, 
-                        sortable=False, 
-                        suppressMenu=True,
-                        suppressMovable=True, 
-                        minWidth=180,  # <-- OBLIGA A LA PANTALLA A CREAR SCROLL HORIZONTAL
-                        wrapText=True,
-                        autoHeight=True,
-                        cellStyle={'fontSize': '14px', 'whiteSpace': 'normal', 'padding': '10px 15px'} 
-                    )
-
-                    # 3. Inyeccion de JavaScript para botones HTML
-                    cell_renderer_btns = JsCode('''
-                    class BtnCellRenderer {
-                        init(params) {
-                            this.eGui = document.createElement('div');
-                            this.eGui.style.display = 'flex';
-                            this.eGui.style.alignItems = 'center';
-                            this.eGui.style.justifyContent = 'center';
-                            this.eGui.style.height = '100%';
-                            
-                            let label = params.colDef.headerName === "REPORTAR" ? "VISITA" : "MAPS";
-                            let bgColor = params.colDef.headerName === "REPORTAR" ? "#004481" : "#3498db";
-                            this.eGui.innerHTML = `
-                             <a href="${params.value}" target="_blank" style="
-                                display: inline-block;
-                                width: 90%;
-                                background-color: ${bgColor};
-                                color: white;
-                                text-align: center;
-                                border-radius: 5px;
-                                text-decoration: none;
-                                font-weight: bold;
-                                padding: 8px 0;
-                                font-size: 12px;
-                                line-height: 1;
-                            ">${label}</a>
-                            `;
-                        }
-                        getGui() {
-                            return this.eGui;
-                        }
+                # 3. Inyeccion de JavaScript para botones HTML
+                cell_renderer_btns = JsCode('''
+                class BtnCellRenderer {
+                    init(params) {
+                        this.eGui = document.createElement('div');
+                        this.eGui.style.display = 'flex';
+                        this.eGui.style.alignItems = 'center';
+                        this.eGui.style.justifyContent = 'center';
+                        this.eGui.style.height = '100%';
+                        
+                        let label = params.colDef.headerName === "REPORTAR" ? "VISITA" : "MAPS";
+                        let bgColor = params.colDef.headerName === "REPORTAR" ? "#004481" : "#3498db";
+                        this.eGui.innerHTML = `
+                         <a href="${params.value}" target="_blank" style="
+                            display: inline-block;
+                            width: 90%;
+                            background-color: ${bgColor};
+                            color: white;
+                            text-align: center;
+                            border-radius: 5px;
+                            text-decoration: none;
+                            font-weight: bold;
+                            padding: 8px 0;
+                            font-size: 12px;
+                            line-height: 1;
+                        ">${label}</a>
+                        `;
                     }
-                    ''')
+                    getGui() {
+                        return this.eGui;
+                    }
+                }
+                ''')
 
-                    # 4. Configurar columnas de botones (fijas a la derecha con ancho rigido)
-                    gb.configure_column("URL_MAGIC", headerName="REPORTAR", cellRenderer=cell_renderer_btns, pinned='right', width=100, minWidth=100, maxWidth=100)
-                    gb.configure_column("URL_MAPS", headerName="UBICAR", cellRenderer=cell_renderer_btns, pinned='right', width=100, minWidth=100, maxWidth=100)
+                # 4. Configurar columnas de botones (fijas a la derecha con ancho rigido)
+                gb.configure_column("URL_MAGIC", headerName="REPORTAR", cellRenderer=cell_renderer_btns, pinned='right', width=100, minWidth=100, maxWidth=100)
+                gb.configure_column("URL_MAPS", headerName="UBICAR", cellRenderer=cell_renderer_btns, pinned='right', width=100, minWidth=100, maxWidth=100)
 
-                    # Ajustar la altura del encabezado para que quepa bien el texto si salta de linea
-                    gb.configure_grid_options(headerHeight=50, rowHeight=60) 
-                    
-                    gridOptions = gb.build()
+                # Ajustar la altura del encabezado para que quepa bien el texto si salta de linea
+                gb.configure_grid_options(headerHeight=50, rowHeight=60) 
+                
+                gridOptions = gb.build()
 
-                    AgGrid(
+                AgGrid(
                         df_final,
                         gridOptions=gridOptions,
                         allow_unsafe_jscode=True, 
                         fit_columns_on_grid_load=False, # Mantiene el scroll libre
                         theme='alpine' 
-                    )
+                )
 
-                    # --- EXPORTAR A EXCEL (CONSERVA LAS COLUMNAS OCULTAS DE LA WEB) ---
-                    df_excel = df_final.copy()
+                # --- EXPORTAR A EXCEL (CONSERVA LAS COLUMNAS OCULTAS DE LA WEB) ---
+                df_excel = df_final.copy()
+                
+                # Definir únicamente las columnas de control técnico que deben limpiarse del Excel
+                cols_a_eliminar = ['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC', 'Auto-Relleno (Excel)', '::auto_unique_id::']
+                
+                # Filtrar para eliminar solo las que existen y evitar errores
+                cols_existentes = [col for col in cols_a_eliminar if col in df_excel.columns]
+                df_excel = df_excel.drop(columns=cols_existentes)
+                
+                # Eliminar cualquier columna "sin nombre" (Unnamed) generada accidentalmente
+                df_excel = df_excel.loc[:, ~df_excel.columns.str.contains('^Unnamed')]
+
+                output = BytesIO()
+                df_excel.to_excel(output, index=False, engine='openpyxl')
+                
+                st.download_button(
+                    f"(Opcional) Descargar Excel - {titulo}",
+                    data=output.getvalue(),
+                    file_name=f"Ruta_{titulo.replace(' ', '_')}_{nombre_sel}_{fecha_sel}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key=f"btn_{titulo}" 
+                )
+                st.divider()
+
+            # --- MODULO 1: PUERTA CALLE ---
+            if df_pc_raw is not None and 'Fecha' in df_pc_raw.columns:
+                df_pc = df_pc_raw.copy()
+                df_pc['Fecha'] = pd.to_datetime(df_pc['Fecha'], errors='coerce').dt.date
+                df_pc_filtrado = df_pc[(df_pc['Fecha'] == fecha_sel) & (df_pc['CAP'] == nombre_sel)].copy()
+                
+                if not df_pc_filtrado.empty:
+                    encontro_datos = True
+                    df_pc_filtrado['Centro Comercial o P.C.'] = "PUERTA CALLE"
                     
-                    # Definir únicamente las columnas de control técnico que deben limpiarse del Excel
-                    cols_a_eliminar = ['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC', 'Auto-Relleno (Excel)', '::auto_unique_id::']
+                    columnas_pc = ["KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.", "Dirección", "Distrito", "Indicaciones para Visitas", "Fecha", "CAP"]
+                    for col in columnas_pc:
+                        if col not in df_pc_filtrado.columns: df_pc_filtrado[col] = ""
+                    df_pc_filtrado = df_pc_filtrado[columnas_pc]
                     
-                    # Filtrar para eliminar solo las que existen y evitar errores
-                    cols_existentes = [col for col in cols_a_eliminar if col in df_excel.columns]
-                    df_excel = df_excel.drop(columns=cols_existentes)
+                    mostrar_modulo(df_pc_filtrado, "PUERTA CALLE")
+
+            # --- MODULO 2: CENTRO COMERCIAL ---
+            if df_cc_raw is not None and 'Fecha' in df_cc_raw.columns:
+                df_cc = df_cc_raw.copy()
+                df_cc['Fecha'] = pd.to_datetime(df_cc['Fecha'], errors='coerce').dt.date
+                df_cc_filtrado = df_cc[(df_cc['Fecha'] == fecha_sel) & (df_cc['CAP'] == nombre_sel)].copy()
+                
+                if not df_cc_filtrado.empty:
+                    encontro_datos = True
+                    if "Centro Comercial o P.C." in df_cc_filtrado.columns:
+                        df_cc_filtrado['Centro Comercial_norm'] = df_cc_filtrado['Centro Comercial o P.C.'].apply(normalizar_texto)
+                        df_datos = df_datos_base.copy()
+                        df_datos['Centro Comercial_norm'] = df_datos['Centro Comercial'].apply(normalizar_texto)
+
+                        columnas_a_borrar = [col for col in ['Dirección', 'Distrito'] if col in df_cc_filtrado.columns]
+                        if columnas_a_borrar:
+                            df_cc_filtrado = df_cc_filtrado.drop(columns=columnas_a_borrar)
+
+                        df_cc_filtrado = df_cc_filtrado.merge(
+                            df_datos[['Centro Comercial_norm', 'Dirección', 'Distrito']],
+                            on='Centro Comercial_norm',
+                            how='left'
+                        )
+                        df_cc_filtrado = df_cc_filtrado.drop(columns=['Centro Comercial_norm'])
                     
-                    # Eliminar cualquier columna "sin nombre" (Unnamed) generada accidentalmente
-                    df_excel = df_excel.loc[:, ~df_excel.columns.str.contains('^Unnamed')]
+                    columnas_cc = ["KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.", "Dirección", "Distrito", "Indicaciones para Visitas", "Fecha", "CAP"]
+                    for col in columnas_cc:
+                        if col not in df_cc_filtrado.columns: df_cc_filtrado[col] = ""
+                    df_cc_filtrado = df_cc_filtrado[columnas_cc]
 
-                    output = BytesIO()
-                    df_excel.to_excel(output, index=False, engine='openpyxl')
-                    
-                    st.download_button(
-                        f"(Opcional) Descargar Excel - {titulo}",
-                        data=output.getvalue(),
-                        file_name=f"Ruta_{titulo.replace(' ', '_')}_{nombre_sel}_{fecha_sel}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        key=f"btn_{titulo}" 
-                    )
-                    st.divider()
+                    mostrar_modulo(df_cc_filtrado, "CENTRO COMERCIAL")
 
-                # --- MODULO 1: PUERTA CALLE ---
-                if df_pc_raw is not None and 'Fecha' in df_pc_raw.columns:
-                    df_pc = df_pc_raw.copy()
-                    df_pc['Fecha'] = pd.to_datetime(df_pc['Fecha'], errors='coerce').dt.date
-                    df_pc_filtrado = df_pc[(df_pc['Fecha'] == fecha_sel) & (df_pc['CAP'] == nombre_sel)].copy()
-                    
-                    if not df_pc_filtrado.empty:
-                        encontro_datos = True
-                        df_pc_filtrado['Centro Comercial o P.C.'] = "PUERTA CALLE"
-                        
-                        columnas_pc = ["KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.", "Dirección", "Distrito", "Indicaciones para Visitas", "Fecha", "CAP"]
-                        for col in columnas_pc:
-                            if col not in df_pc_filtrado.columns: df_pc_filtrado[col] = ""
-                        df_pc_filtrado = df_pc_filtrado[columnas_pc]
-                        
-                        mostrar_modulo(df_pc_filtrado, "PUERTA CALLE")
+            # --- MODULO 3: CAPACITACIONES ---
+            if df_cap_raw is not None and 'Fecha' in df_cap_raw.columns:
+                df_cap = df_cap_raw.copy()
+                df_cap['Fecha'] = pd.to_datetime(df_cap['Fecha'], errors='coerce').dt.date
+                df_cap_filtrado = df_cap[(df_cap['Fecha'] == fecha_sel) & (df_cap['CAP'] == nombre_sel)].copy()
+                
+                if not df_cap_filtrado.empty:
+                    encontro_datos = True
+                    mostrar_modulo(df_cap_filtrado, "CAPACITACIONES")
 
-                # --- MODULO 2: CENTRO COMERCIAL ---
-                if df_cc_raw is not None and 'Fecha' in df_cc_raw.columns:
-                    df_cc = df_cc_raw.copy()
-                    df_cc['Fecha'] = pd.to_datetime(df_cc['Fecha'], errors='coerce').dt.date
-                    df_cc_filtrado = df_cc[(df_cc['Fecha'] == fecha_sel) & (df_cc['CAP'] == nombre_sel)].copy()
-                    
-                    if not df_cc_filtrado.empty:
-                        encontro_datos = True
-                        if "Centro Comercial o P.C." in df_cc_filtrado.columns:
-                            df_cc_filtrado['Centro Comercial_norm'] = df_cc_filtrado['Centro Comercial o P.C.'].apply(normalizar_texto)
-                            df_datos = df_datos_base.copy()
-                            df_datos['Centro Comercial_norm'] = df_datos['Centro Comercial'].apply(normalizar_texto)
-
-                            columnas_a_borrar = [col for col in ['Dirección', 'Distrito'] if col in df_cc_filtrado.columns]
-                            if columnas_a_borrar:
-                                df_cc_filtrado = df_cc_filtrado.drop(columns=columnas_a_borrar)
-
-                            df_cc_filtrado = df_cc_filtrado.merge(
-                                df_datos[['Centro Comercial_norm', 'Dirección', 'Distrito']],
-                                on='Centro Comercial_norm',
-                                how='left'
-                            )
-                            df_cc_filtrado = df_cc_filtrado.drop(columns=['Centro Comercial_norm'])
-                        
-                        columnas_cc = ["KAM", "Marca", "PSI", "Puntos BBVA", "Centro Comercial o P.C.", "Dirección", "Distrito", "Indicaciones para Visitas", "Fecha", "CAP"]
-                        for col in columnas_cc:
-                            if col not in df_cc_filtrado.columns: df_cc_filtrado[col] = ""
-                        df_cc_filtrado = df_cc_filtrado[columnas_cc]
-
-                        mostrar_modulo(df_cc_filtrado, "CENTRO COMERCIAL")
-
-                # --- MODULO 3: CAPACITACIONES ---
-                if df_cap_raw is not None and 'Fecha' in df_cap_raw.columns:
-                    df_cap = df_cap_raw.copy()
-                    df_cap['Fecha'] = pd.to_datetime(df_cap['Fecha'], errors='coerce').dt.date
-                    df_cap_filtrado = df_cap[(df_cap['Fecha'] == fecha_sel) & (df_cap['CAP'] == nombre_sel)].copy()
-                    
-                    if not df_cap_filtrado.empty:
-                        encontro_datos = True
-                        mostrar_modulo(df_cap_filtrado, "CAPACITACIONES")
-
-                if not encontro_datos:
-                    st.warning(f"No tienes rutas ni capacitaciones asignadas para el {fecha_sel}.")
+            if not encontro_datos:
+                # Alerta si no se encontraron datos para la fecha seleccionada
+                st.warning(f"No tienes rutas ni capacitaciones asignadas para el {fecha_sel}.")
