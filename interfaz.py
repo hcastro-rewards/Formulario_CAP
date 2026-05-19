@@ -80,6 +80,7 @@ def procesar_fila(fila, nombre_cap):
     psi = limpiar(fila.get("PSI"))
     puntos = limpiar(fila.get("Puntos BBVA"))
     tipo_local = limpiar(fila.get("Centro Comercial o P.C.")) 
+    indicaciones = limpiar(fila.get("Indicaciones para Visitas")) # <-- NUEVA CAPTURA
 
     query = urllib.parse.quote(f"{marca} {direccion} {distrito} Lima Peru")
 
@@ -93,7 +94,8 @@ def procesar_fila(fila, nombre_cap):
         "psi": psi,
         "puntos": puntos,
         "cap": nombre_cap,
-        "tipo_local": tipo_local 
+        "tipo_local": tipo_local,
+        "indicaciones": indicaciones # <-- SE ENVÍA AL APPS SCRIPT
     })
     magic_link = f"{URL_BASE_GAS}?{query_params}"
 
