@@ -193,8 +193,11 @@ else:
                     # --- CONFIGURACION DE AGGRID (Estilo Dataframe Nativo + Botones) ---
                     gb = GridOptionsBuilder.from_dataframe(df_final)
                     
-                    # 1. Ocultar columnas generadas que no se deben mostrar en la web
-                    cols_to_hide = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_GOOGLE']
+                    # 1. Ocultar columnas generadas e internas + Columnas innecesarias solicitadas para la Web
+                    cols_to_hide = [
+                        'Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_GOOGLE',
+                        'Indicaciones para Visitas', 'Fecha', 'CAP'
+                    ]
                     for col in cols_to_hide:
                         gb.configure_column(col, hide=True)
 
@@ -262,10 +265,10 @@ else:
                         theme='alpine' 
                     )
 
-                    # --- EXPORTAR A EXCEL (BLINDADO Y LIMPIO) ---
+                    # --- EXPORTAR A EXCEL (CONSERVA LAS COLUMNAS OCULTAS DE LA WEB) ---
                     df_excel = df_final.copy()
                     
-                    # Definir columnas a eliminar explícitamente
+                    # Definir únicamente las columnas de control técnico que deben limpiarse del Excel
                     cols_a_eliminar = ['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC', 'Auto-Relleno (Excel)', '::auto_unique_id::']
                     
                     # Filtrar para eliminar solo las que existen y evitar errores
