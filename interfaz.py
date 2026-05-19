@@ -193,7 +193,7 @@ else:
                     # --- CONFIGURACION DE AGGRID (Estilo Dataframe Nativo + Botones) ---
                     gb = GridOptionsBuilder.from_dataframe(df_final)
                     
-                    # 1. Ocultar columnas generadas que no se deben mostrar
+                    # 1. Ocultar columnas generadas que no se deben mostrar en la web
                     cols_to_hide = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_GOOGLE']
                     for col in cols_to_hide:
                         gb.configure_column(col, hide=True)
@@ -205,7 +205,7 @@ else:
                         sortable=False, 
                         suppressMenu=True,
                         suppressMovable=True, 
-                        minWidth=180,  # <-- ESTO OBLIGA A LA PANTALLA A CREAR SCROLL HORIZONTAL
+                        minWidth=180,  # <-- OBLIGA A LA PANTALLA A CREAR SCROLL HORIZONTAL
                         wrapText=True,
                         autoHeight=True,
                         cellStyle={'fontSize': '14px', 'whiteSpace': 'normal', 'padding': '10px 15px'} 
@@ -262,8 +262,19 @@ else:
                         theme='alpine' 
                     )
 
-                    # --- EXPORTAR A EXCEL ---
-                    df_excel = df_final.drop(columns=['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC'])
+                    # --- EXPORTAR A EXCEL (BLINDADO Y LIMPIO) ---
+                    df_excel = df_final.copy()
+                    
+                    # Definir columnas a eliminar explícitamente
+                    cols_a_eliminar = ['URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC', 'Auto-Relleno (Excel)', '::auto_unique_id::']
+                    
+                    # Filtrar para eliminar solo las que existen y evitar errores
+                    cols_existentes = [col for col in cols_a_eliminar if col in df_excel.columns]
+                    df_excel = df_excel.drop(columns=cols_existentes)
+                    
+                    # Eliminar cualquier columna "sin nombre" (Unnamed) generada accidentalmente
+                    df_excel = df_excel.loc[:, ~df_excel.columns.str.contains('^Unnamed')]
+
                     output = BytesIO()
                     df_excel.to_excel(output, index=False, engine='openpyxl')
                     
