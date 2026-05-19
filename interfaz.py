@@ -55,7 +55,7 @@ st.markdown("<p style='text-align: center; color: white; font-size: 1.2rem;'>Sis
 st.divider()
 
 # --- CONFIGURACION DE ENLACES EXTERNOS ---
-ID_WEB_APP = "AKfycbzmhwXgNAGmoknSdl9rtaf2oNd93Ds_U_1CxleiuvZAmuK0iqwtHIEh4AgGR22gU139"
+ID_WEB_APP = "AKfycbymWbDUhYLMkEcMw3NfwjPDc2JKZCIMYpst0RTGwqY9i_jV6XB1CCjarNb75cXpGOnW"
 URL_BASE_GAS = f"https://script.google.com/macros/s/{ID_WEB_APP}/exec"
 URL_BASE_DATOS_GS = "https://docs.google.com/spreadsheets/d/186GinOg7PgFcp1g9LAmW32K5vlTEK8ChYjI3qnsf1-4/edit?usp=sharing"
 
