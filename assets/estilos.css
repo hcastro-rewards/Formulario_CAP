@@ -1,0 +1,31 @@
+/* Fondo principal y barra lateral */
+.stApp { background-color: #0f172a; color: #f8fafc !important; }
+[data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
+h1, h2, h3, h4, p, label, span { color: #f8fafc !important; }
+
+/* Botones del menú lateral simulando acordeón */
+div[data-testid="stSidebar"] div.stButton > button {
+    width: 100%;
+    background-color: transparent !important;
+    border: none !important;
+    color: #94a3b8 !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    padding-left: 15px;
+}
+div[data-testid="stSidebar"] div.stButton > button:hover { color: #38bdf8 !important; background-color: #334155 !important; }
+
+/* Botones principales de acción */
+div.stButton > button:first-child { 
+    background-color: #38bdf8 !important; 
+    color: #0f172a !important; 
+    border: none; 
+    border-radius: 8px; 
+    font-weight: bold; 
+}
+div.stButton > button:first-child:hover { background-color: #0284c7 !important; color: #ffffff !important; }
+
+/* Alertas */
+.stAlert[data-baseweb="alert"] { background-color: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; }
+.stAlert[data-baseweb="alert-warning"] { background-color: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; }
+.stAlert[data-baseweb="alert-error"] { background-color: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; }
