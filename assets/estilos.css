@@ -1,31 +1,122 @@
-/* Fondo principal y barra lateral */
+/* --- CORRECCIÓN ERROR DE ICONOS --- */
+html, body, .stApp, h1, h2, h3, h4, h5, h6, p, label, div[data-testid="stMarkdownContainer"] > p {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+/* --- FONDOS PRINCIPALES --- */
 .stApp { background-color: #0f172a; color: #f8fafc !important; }
 [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
-h1, h2, h3, h4, p, label, span { color: #f8fafc !important; }
 
-/* Botones del menú lateral simulando acordeón */
+
+/* --- EXPANSORES NATIVOS CON DISEÑO PLANO (ACORDEÓN INVISIBLE) --- */
+[data-testid="stExpander"] {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    margin-bottom: 0px !important;
+}
+[data-testid="stExpander"] details {
+    border: none !important;
+}
+[data-testid="stExpander"] summary {
+    padding: 15px 15px !important;
+    color: #94a3b8 !important;
+    font-weight: bold !important;
+    border-bottom: 1px solid #334155 !important;
+    border-radius: 0px !important;
+    transition: color 0.3s ease;
+}
+[data-testid="stExpander"] summary:hover {
+    color: #38bdf8 !important;
+}
+[data-testid="stExpander"] summary:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    color: #38bdf8 !important;
+}
+[data-testid="stExpanderDetails"] {
+    padding-top: 0px !important;
+    padding-bottom: 5px !important;
+}
+
+
+/* --- DISEÑO PLANO Y SIN BORDES PARA BOTONES LATERALES --- */
 div[data-testid="stSidebar"] div.stButton > button {
     width: 100%;
     background-color: transparent !important;
-    border: none !important;
-    color: #94a3b8 !important;
+    border: none !important; /* Elimina cualquier borde */
+    box-shadow: none !important; /* Elimina la sombra del botón */
+    color: #e2e8f0 !important;
     text-align: left !important;
     justify-content: flex-start !important;
-    padding-left: 15px;
+    padding: 12px 15px 12px 30px !important; /* Sangría izquierda para simular el submenú */
+    margin: 0 !important; 
+    border-left: 4px solid transparent !important; /* Espacio para barra de color */
+    border-radius: 0 !important; /* Quita los bordes redondeados, lo hace cuadrado */
+    font-weight: normal !important;
+    transition: all 0.2s ease-in-out;
 }
-div[data-testid="stSidebar"] div.stButton > button:hover { color: #38bdf8 !important; background-color: #334155 !important; }
 
-/* Botones principales de acción */
-div.stButton > button:first-child { 
+/* Ajuste del botón Inicio para que no tenga la sangría de los submenús */
+div[data-testid="stSidebar"] > div > div > div > div > div.stButton > button {
+    padding-left: 15px !important;
+}
+
+/* Hover General: Fondo oscuro sutil al acercar el mouse y elimina cualquier borde de foco */
+div[data-testid="stSidebar"] div.stButton > button:hover,
+div[data-testid="stSidebar"] div.stButton > button:focus,
+div[data-testid="stSidebar"] div.stButton > button:active {
+    background-color: #334155 !important; /* Color oscuro leve */
+    box-shadow: none !important;
+    outline: none !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    color: #ffffff !important;
+}
+
+
+/* --- BARRAS LATERALES DE COLORES ESPECÍFICOS PARA LOS SUBMENÚS --- */
+
+/* 1er Acordeón (CAPACITADOR): Botón 1 = Visitas (Cyan) */
+[data-testid="stExpander"]:nth-of-type(1) [data-testid="stExpanderDetails"] div.stButton:nth-of-type(1) > button:hover,
+[data-testid="stExpander"]:nth-of-type(1) [data-testid="stExpanderDetails"] div.stButton:nth-of-type(1) > button:focus { 
+    border-left-color: #38bdf8 !important; color: #38bdf8 !important; 
+}
+/* 1er Acordeón (CAPACITADOR): Botón 2 = Campañas (Esmeralda) */
+[data-testid="stExpander"]:nth-of-type(1) [data-testid="stExpanderDetails"] div.stButton:nth-of-type(2) > button:hover,
+[data-testid="stExpander"]:nth-of-type(1) [data-testid="stExpanderDetails"] div.stButton:nth-of-type(2) > button:focus { 
+    border-left-color: #14b8a6 !important; color: #14b8a6 !important; 
+}
+
+/* 2do Acordeón (GERENCIA): Botón 1 = Dashboard (Naranja) */
+[data-testid="stExpander"]:nth-of-type(2) [data-testid="stExpanderDetails"] div.stButton:nth-of-type(1) > button:hover,
+[data-testid="stExpander"]:nth-of-type(2) [data-testid="stExpanderDetails"] div.stButton:nth-of-type(1) > button:focus { 
+    border-left-color: #f59e0b !important; color: #f59e0b !important; 
+}
+
+/* Hover específico para el botón de Inicio */
+div[data-testid="stSidebar"] > div > div > div > div > div.stButton > button:hover,
+div[data-testid="stSidebar"] > div > div > div > div > div.stButton > button:focus {
+    border-left-color: #f8fafc !important;
+}
+
+
+/* --- BOTONES PRINCIPALES DE ACCIÓN (Área Central) --- */
+div[data-testid="stMainBlockContainer"] div.stButton > button { 
     background-color: #38bdf8 !important; 
     color: #0f172a !important; 
     border: none; 
     border-radius: 8px; 
     font-weight: bold; 
+    padding: 10px 20px;
 }
-div.stButton > button:first-child:hover { background-color: #0284c7 !important; color: #ffffff !important; }
+div[data-testid="stMainBlockContainer"] div.stButton > button:hover { 
+    background-color: #0284c7 !important; 
+    color: #ffffff !important; 
+}
 
-/* Alertas */
+/* --- ALERTAS --- */
 .stAlert[data-baseweb="alert"] { background-color: rgba(56, 189, 248, 0.1); border: 1px solid #38bdf8; }
 .stAlert[data-baseweb="alert-warning"] { background-color: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; }
 .stAlert[data-baseweb="alert-error"] { background-color: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; }

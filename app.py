@@ -47,21 +47,23 @@ def modal_seguridad():
 with st.sidebar:
     st.markdown(f"<div style='text-align: center; margin-bottom: 20px;'><img src='{URL_LOGO_REWARDS}' width='100%'></div>", unsafe_allow_html=True)
     
-    if st.button("🏠 Inicio"):
+    # 1. Inicio (Botón Libre)
+    if st.button(" Inicio"):
         st.session_state.vista_actual = 'Inicio'
         
-    st.divider()
-    
-    # Acordeón CAPACITADOR
-    with st.expander("💼 CAPACITADOR", expanded=True):
-        if st.button("📋 Reporte de Visitas"):
+    # --- SECCIÓN CAPACITADOR (ACORDEÓN PLANO 1) ---
+    with st.expander(" CAPACITADOR", expanded=True):
+        
+        if st.button("Reporte de Visitas"):
             st.session_state.vista_actual = 'Reporte Visitas'
-        if st.button("📢 Reporte de Campañas"):
+            
+        if st.button("Reporte de Campañas"):
             st.session_state.vista_actual = 'Reporte Campañas'
             
-    # Acordeón GERENCIA
-    with st.expander("📊 GERENCIA", expanded=False):
-        if st.button("📈 Dashboard Operativo"):
+    # --- SECCIÓN GERENCIA (ACORDEÓN PLANO 2) ---
+    with st.expander(" GERENCIA", expanded=False):
+        
+        if st.button("Dashboard"):
             if not st.session_state.gerencia_desbloqueada:
                 modal_seguridad()
             else:
