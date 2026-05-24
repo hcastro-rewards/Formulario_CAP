@@ -12,7 +12,7 @@ URL_BASE_DATOS_GS = "https://docs.google.com/spreadsheets/d/186GinOg7PgFcp1g9LAm
 def mostrar():
     col_titulo, col_volver = st.columns([4, 1])
     with col_titulo:
-        st.title("📋 Reporte de Visitas - Sistema de Rutas")
+        st.title("Reporte de Visitas - Sistema de Rutas")
     with col_volver:
         st.write("") # Alineación vertical
         if st.button("← Volver al Inicio", use_container_width=True, key="volver_visitas"):
@@ -82,7 +82,7 @@ def mostrar():
             encontro_datos = False 
 
             def mostrar_modulo(df_final, titulo):
-                st.markdown(f"<h3 style='color: #38bdf8 !important;'>📍 {titulo}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='color: #38bdf8 !important;'> {titulo}</h3>", unsafe_allow_html=True)
                 
                 columnas_generadas = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC']
                 df_final[columnas_generadas] = df_final.apply(lambda x: procesar_fila(x, nombre_sel), axis=1)
