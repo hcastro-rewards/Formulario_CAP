@@ -3,8 +3,8 @@ import streamlit as st
 def mostrar():
     st.markdown("""
         <div style='text-align: center; margin-bottom: 40px; margin-top: 20px;'>
-            <h1 style='color: #f8fafc; font-family: serif; font-weight: bold;'>Portal Operativo Integrado</h1>
-            <p style='color: #94a3b8; font-size: 18px;'>Gestión centralizada de mantenimientos, técnicos y referidos</p>
+            <h1 style='color: #f8fafc; font-family: serif; font-weight: bold;'>Sistema Rutas Inteligente</h1>
+            <p style='color: #94a3b8; font-size: 18px;'>Gestión centralizada de reporte de visitas, campañas y gerencia</p>
         </div>
     """, unsafe_allow_html=True)
     
