@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
+import pytz  # <-- NUEVA LIBRERÍA DE ZONA HORARIA
 from datetime import datetime, timedelta
 from io import BytesIO
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
@@ -49,13 +50,16 @@ def mostrar():
         df_cc_raw = st.session_state['dict_hojas'].get("CC 2026 - 2")
         df_cap_raw = st.session_state['dict_hojas'].get("CAPACITACIONES")
 
-        hoy = datetime.now().date()
+        # --- AQUÍ ESTÁ LA CORRECCIÓN DE LA HORA (LIMA, PERÚ) ---
+        zona_lima = pytz.timezone('America/Lima')
+        hoy = datetime.now(zona_lima).date()
+        
         opciones_fechas = {
             f"Ayer ({(hoy - timedelta(days=1)).strftime('%Y-%m-%d')})": hoy - timedelta(days=1),
             f"Hoy ({hoy.strftime('%Y-%m-%d')})": hoy,
             f"Mañana ({(hoy + timedelta(days=1)).strftime('%Y-%m-%d')})": hoy + timedelta(days=1)
         }
-
+        
         col_f, col_n = st.columns(2)
         with col_f:
             fecha_str = st.selectbox("📅 ¿Qué fecha deseas consultar?", options=list(opciones_fechas.keys()), index=None)
