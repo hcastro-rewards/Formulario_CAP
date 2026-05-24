@@ -5,100 +5,99 @@ html, body, .stApp, h1, h2, h3, h4, h5, h6, p, label, div[data-testid="stMarkdow
 
 /* --- FONDOS PRINCIPALES --- */
 .stApp { background-color: #0f172a; color: #f8fafc !important; }
-[data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
+
+/* Inyección profunda del color base corporativo en toda la barra lateral */
+[data-testid="stSidebar"], 
+[data-testid="stSidebar"] > div:first-child { 
+    background-color: #1e293b !important; 
+    border-right: 1px solid #334155; 
+}
 
 
-/* --- EXPANSORES NATIVOS CON DISEÑO PLANO (ACORDEÓN INVISIBLE) --- */
+/* --- EXPANSORES NATIVOS (ACORDEONES) UNIFICADOS AL COLOR DE LA BARRA --- */
 [data-testid="stExpander"] {
     border: none !important;
-    background: transparent !important;
+    background-color: #1e293b !important; /* Camuflaje del contenedor */
+    background: #1e293b !important;
     box-shadow: none !important;
     margin-bottom: 0px !important;
 }
-[data-testid="stExpander"] details {
-    border: none !important;
+[data-testid="stExpander"] details { 
+    border: none !important; 
+    background-color: #1e293b !important; 
 }
 [data-testid="stExpander"] summary {
     padding: 15px 15px !important;
+    background-color: #1e293b !important; /* Camuflaje del título */
     color: #94a3b8 !important;
     font-weight: bold !important;
     border-bottom: 1px solid #334155 !important;
     border-radius: 0px !important;
     transition: color 0.3s ease;
 }
-[data-testid="stExpander"] summary:hover {
-    color: #38bdf8 !important;
-}
+[data-testid="stExpander"] summary:hover,
 [data-testid="stExpander"] summary:focus {
+    color: #38bdf8 !important;
+    background-color: #1e293b !important;
     outline: none !important;
     box-shadow: none !important;
-    color: #38bdf8 !important;
 }
 [data-testid="stExpanderDetails"] {
     padding-top: 0px !important;
     padding-bottom: 5px !important;
+    background-color: #1e293b !important;
 }
 
 
-/* --- DISEÑO PLANO Y SIN BORDES PARA BOTONES LATERALES --- */
-div[data-testid="stSidebar"] div.stButton > button {
+/* --- DISEÑO PLANO PARA BOTONES LATERALES (CAMUFLAJE TOTAL EXTREMO) --- */
+/* Atacamos todas las variantes posibles del botón nativo de Streamlit */
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] button[kind="secondary"],
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] div.stButton > button {
     width: 100%;
-    background-color: transparent !important;
-    border: none !important; /* Elimina cualquier borde */
-    box-shadow: none !important; /* Elimina la sombra del botón */
-    color: #e2e8f0 !important;
+    background-color: #1e293b !important; /* El color exacto de la barra */
+    background: #1e293b !important;       /* Fuerza bruta contra el tema nativo */
+    border: 1px solid #1e293b !important; /* Borde del mismo color para fundirse */
+    box-shadow: none !important;
+    color: #f8fafc !important;            /* Texto blanco sólido */
     text-align: left !important;
     justify-content: flex-start !important;
-    padding: 12px 15px 12px 30px !important; /* Sangría izquierda para simular el submenú */
-    margin: 0 !important; 
-    border-left: 4px solid transparent !important; /* Espacio para barra de color */
-    border-radius: 0 !important; /* Quita los bordes redondeados, lo hace cuadrado */
+    padding: 10px 15px 10px 25px !important; 
+    margin: 0 0 5px 0 !important; 
+    border-radius: 6px !important; 
     font-weight: normal !important;
     transition: all 0.2s ease-in-out;
 }
 
-/* Ajuste del botón Inicio para que no tenga la sangría de los submenús */
-div[data-testid="stSidebar"] > div > div > div > div > div.stButton > button {
-    padding-left: 15px !important;
+/* Neutralizamos cualquier texto o contenedor interno que Streamlit inyecte */
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] button[kind="secondary"] div,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] button[kind="secondary"] p,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] div.stButton > button div,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] div.stButton > button p {
+    color: #f8fafc !important;
 }
 
-/* Hover General: Fondo oscuro sutil al acercar el mouse y elimina cualquier borde de foco */
-div[data-testid="stSidebar"] div.stButton > button:hover,
-div[data-testid="stSidebar"] div.stButton > button:focus,
-div[data-testid="stSidebar"] div.stButton > button:active {
-    background-color: #334155 !important; /* Color oscuro leve */
-    box-shadow: none !important;
+
+/* --- HOVER Y ACTIVE: SOLO BORDE LUMINOSO CYAN --- */
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] button[kind="secondary"]:hover,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] button[kind="secondary"]:focus,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] button[kind="secondary"]:active,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] div.stButton > button:hover,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] div.stButton > button:focus,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] div.stButton > button:active {
+    background-color: #1e293b !important; /* El fondo NUNCA cambia del azul corporativo */
+    background: #1e293b !important;       
+    border: 1px solid #38bdf8 !important; /* Borde luminoso Cyan */
+    color: #38bdf8 !important;            
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4) !important; 
     outline: none !important;
-    border-top: none !important;
-    border-right: none !important;
-    border-bottom: none !important;
-    color: #ffffff !important;
 }
 
-
-/* --- BARRAS LATERALES DE COLORES ESPECÍFICOS PARA LOS SUBMENÚS --- */
-
-/* 1er Acordeón (CAPACITADOR): Botón 1 = Visitas (Cyan) */
-[data-testid="stExpander"]:nth-of-type(1) [data-testid="stExpanderDetails"] div.stButton:nth-of-type(1) > button:hover,
-[data-testid="stExpander"]:nth-of-type(1) [data-testid="stExpanderDetails"] div.stButton:nth-of-type(1) > button:focus { 
-    border-left-color: #38bdf8 !important; color: #38bdf8 !important; 
-}
-/* 1er Acordeón (CAPACITADOR): Botón 2 = Campañas (Esmeralda) */
-[data-testid="stExpander"]:nth-of-type(1) [data-testid="stExpanderDetails"] div.stButton:nth-of-type(2) > button:hover,
-[data-testid="stExpander"]:nth-of-type(1) [data-testid="stExpanderDetails"] div.stButton:nth-of-type(2) > button:focus { 
-    border-left-color: #14b8a6 !important; color: #14b8a6 !important; 
-}
-
-/* 2do Acordeón (GERENCIA): Botón 1 = Dashboard (Naranja) */
-[data-testid="stExpander"]:nth-of-type(2) [data-testid="stExpanderDetails"] div.stButton:nth-of-type(1) > button:hover,
-[data-testid="stExpander"]:nth-of-type(2) [data-testid="stExpanderDetails"] div.stButton:nth-of-type(1) > button:focus { 
-    border-left-color: #f59e0b !important; color: #f59e0b !important; 
-}
-
-/* Hover específico para el botón de Inicio */
-div[data-testid="stSidebar"] > div > div > div > div > div.stButton > button:hover,
-div[data-testid="stSidebar"] > div > div > div > div > div.stButton > button:focus {
-    border-left-color: #f8fafc !important;
+/* Forzamos que el texto interno también se pinte de Cyan al tocar */
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] button:hover div,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] button:hover p,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] button:focus div,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] button:focus p {
+    color: #38bdf8 !important;
 }
 
 

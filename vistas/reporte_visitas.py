@@ -10,7 +10,16 @@ from modulos.procesamiento_datos import normalizar_texto, procesar_fila
 URL_BASE_DATOS_GS = "https://docs.google.com/spreadsheets/d/186GinOg7PgFcp1g9LAmW32K5vlTEK8ChYjI3qnsf1-4/edit?usp=sharing"
 
 def mostrar():
-    st.title("📋 Reporte de Visitas - Sistema de Rutas")
+    col_titulo, col_volver = st.columns([4, 1])
+    with col_titulo:
+        st.title("📋 Reporte de Visitas - Sistema de Rutas")
+    with col_volver:
+        st.write("") # Alineación vertical
+        if st.button("← Volver al Inicio", use_container_width=True, key="volver_visitas"):
+            st.session_state.vista_actual = 'Inicio'
+            st.session_state.last_cap = None
+            st.session_state.last_ger = None
+            st.rerun()
     
     try:
         df_datos_base = pd.read_excel("data/Datos.xlsx", sheet_name="Datos")
