@@ -70,10 +70,10 @@ with st.sidebar:
     st.markdown(f"<div style='text-align: center; margin-bottom: 30px;'><img src='{URL_LOGO_REWARDS}' width='100%'></div>", unsafe_allow_html=True)
         
     # --- SECCIÓN CAPACITADOR ---
-    with st.expander("CAPACITADOR", expanded=(st.session_state.vista_actual in ["Reporte de Visitas", "Reporte de Campañas"])):
+    with st.expander("CAPACITADOR", expanded=(st.session_state.vista_actual in ["Plataforma de rutas", "Reporte de Campañas"])):
         
-        if st.button("Reporte de Visitas", use_container_width=True):
-            st.session_state.vista_actual = 'Reporte de Visitas'
+        if st.button("Plataforma de rutas", use_container_width=True):
+            st.session_state.vista_actual = 'Plataforma de rutas'
             st.session_state.cerrar_sidebar = True  
             st.rerun()
             
@@ -101,7 +101,7 @@ with st.sidebar:
 # --- ENRUTAMIENTO DE VISTAS ---
 if st.session_state.vista_actual == 'Inicio':
     inicio.mostrar()
-elif st.session_state.vista_actual == 'Reporte de Visitas':
+elif st.session_state.vista_actual == 'Plataforma de rutas':
     reporte_visitas.mostrar()
 elif st.session_state.vista_actual == 'Reporte de Campañas':
     reporte_campanas.mostrar()

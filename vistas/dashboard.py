@@ -14,6 +14,6 @@ def mostrar():
             
     if st.session_state.gerencia_desbloqueada:
         st.success("Acceso autorizado. Bienvenido al panel de control de gerencia.")
-        st.info("Aquí puedes integrar tus gráficos de Chart.js o gráficas nativas de Streamlit (Plotly, Altair).")
+        st.info("Esta sección está en desarrollo. Próximamente se agregarán gráficas.")
     else:
         st.error("🔒 Acceso denegado. Por favor, utiliza el menú lateral 'GERENCIA' para ingresar tu clave.")

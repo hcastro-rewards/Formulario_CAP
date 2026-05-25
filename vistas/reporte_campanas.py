@@ -5,7 +5,8 @@ URL_BASE_APP_SCRIPT = "https://script.google.com/macros/s/AKfycbyZObX6vBV2ZgkRcy
 def mostrar():
     col_titulo, col_volver = st.columns([4, 1])
     with col_titulo:
-        st.title("Reporte de Campañas")
+        # Título personalizado con tamaño reducido y color corporativo
+        st.markdown("<h1 style='font-size: 32px; color: #f8fafc; margin-top: 0px;'>Reporte de Campañas</h1>", unsafe_allow_html=True)
     with col_volver:
         st.write("")
         if st.button("← Volver al Inicio", use_container_width=True, key="volver_campanas"):
@@ -14,7 +15,7 @@ def mostrar():
             st.session_state.last_ger = None
             st.rerun()
             
-    st.markdown("<p style='color: #94a3b8;'>Genera un nuevo reporte de campaña para la base de datos.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8; font-size: 18px; margin-top: -10px;'>Generar reporte de campaña.</p>", unsafe_allow_html=True)
     st.divider()
 
     url_campana = f"{URL_BASE_APP_SCRIPT}?tipo=campana"

@@ -12,7 +12,7 @@ URL_BASE_DATOS_GS = "https://docs.google.com/spreadsheets/d/186GinOg7PgFcp1g9LAm
 def mostrar():
     col_titulo, col_volver = st.columns([4, 1])
     with col_titulo:
-        st.title("Reporte de Visitas - Sistema de Rutas")
+        st.title("Plataforma de rutas inteligentes")
     with col_volver:
         st.write("") # Alineación vertical
         if st.button("← Volver al Inicio", use_container_width=True, key="volver_visitas"):
@@ -71,9 +71,9 @@ def mostrar():
         
         col_f, col_n = st.columns(2)
         with col_f:
-            fecha_str = st.selectbox("📅 ¿Qué fecha deseas consultar?", options=list(opciones_fechas.keys()), index=None)
+            fecha_str = st.selectbox("¿Qué fecha deseas consultar?", options=list(opciones_fechas.keys()), index=None)
         with col_n:
-            nombre_sel = st.selectbox("👤 ¿Cuál es tu nombre?", options=["Augusto", "Flor", "Gustavo", "Harold", "Ivan", "Mateo"], index=None)
+            nombre_sel = st.selectbox("¿Cuál es tu nombre?", options=["Augusto", "Flor", "Gustavo", "Harold", "Ivan", "Mateo"], index=None)
 
         if fecha_str and nombre_sel:
             fecha_sel = opciones_fechas[fecha_str]
@@ -151,7 +151,7 @@ def mostrar():
                 df_excel.to_excel(output, index=False, engine='openpyxl')
                 
                 st.download_button(
-                    f"📥 Descargar Excel - {titulo}",
+                    f"Descargar Excel - {titulo}",
                     data=output.getvalue(),
                     file_name=f"Ruta_{titulo.replace(' ', '_')}_{nombre_sel}_{fecha_sel}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

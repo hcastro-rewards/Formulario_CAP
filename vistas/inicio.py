@@ -1,42 +1,77 @@
 import streamlit as st
 
 def mostrar():
-    st.markdown("""
-        <div style='text-align: center; margin-bottom: 40px; margin-top: 20px;'>
-            <h1 style='color: #f8fafc; font-family: serif; font-weight: bold;'>Sistema Rutas Inteligente</h1>
-            <p style='color: #94a3b8; font-size: 18px;'>Gestión centralizada de reporte de visitas, campañas y gerencia</p>
+    # --- ENCABEZADO CENTRADO ---
+    st.markdown(
+        """
+        <div style='text-align: center; margin-top: -15px; margin-bottom: 40px;'>
+            <h1 style='color: #f8fafc; font-size: 35px; font-family: sans-serif; font-weight: bold;'>Sistema Gestión Integrada</h1>
+            <p style='color: #94a3b8; font-size: 20px;'>Gestión centralizada de reportería, campañas y gerencia</p>
         </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True
+    )
     
-    col1, col2, col3 = st.columns(3, gap="large")
+    # --- CARDS DE NAVEGACIÓN ---
+    col1, col2, col3 = st.columns(3, gap="medium")
     
-    with col1:
-        st.markdown("<h1 style='text-align: center; font-size: 3rem;'>📋</h1>", unsafe_allow_html=True)
-        st.markdown("<h4 style='text-align: center; color: #38bdf8; font-weight: bold;'>Reporte de Visitas</h4>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 14px;'>Completar mantenimientos y evaluaciones en campo.</p>", unsafe_allow_html=True)
-        if st.button("Ir a Visitas", use_container_width=True, key="btn_ir_visitas"):
-            st.session_state.vista_actual = "Reporte de Visitas"
-            st.session_state.last_cap = "Reporte de Visitas"
-            st.session_state.last_ger = None
-            st.rerun()
+    # Definimos las tarjetas
+    cards = [
+        {
+            #"emoji": "📋", # Comentado para activar luego
+            "title": "Plataforma de Rutas",
+            "desc": "Completar visitas programadas.",
+            "btn_text": "Ir a Visitas",
+            "key": "btn_ir_visitas",
+            "vista": "Plataforma de rutas",
+            "color": "#38bdf8"
+        },
+        {
+            #"emoji": "📢", # Comentado para activar luego
+            "title": "Reporte de Campañas",
+            "desc": "Generar reportes y gestión de eventos masivos.",
+            "btn_text": "Ir a Campañas",
+            "key": "btn_ir_campanas",
+            "vista": "Reporte de Campañas",
+            "color": "#14b8a6"
+        },
+        {
+            #"emoji": "📈", # Comentado para activar luego
+            "title": "Dashboard Gerencial",
+            "desc": "Métricas, gráficas y KPIs operativos de gerencia.",
+            "btn_text": "Ir a Dashboard",
+            "key": "btn_ir_dashboard",
+            "vista": "Dashboard",
+            "color": "#f59e0b"
+        }
+    ]
 
-    with col2:
-        st.markdown("<h1 style='text-align: center; font-size: 3rem;'>📢</h1>", unsafe_allow_html=True)
-        st.markdown("<h4 style='text-align: center; color: #14b8a6; font-weight: bold;'>Reporte de Campañas</h4>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 14px;'>Generar reportes y gestión de eventos masivos.</p>", unsafe_allow_html=True)
-        if st.button("Ir a Campañas", use_container_width=True, key="btn_ir_campanas"):
-            st.session_state.vista_actual = "Reporte de Campañas"
-            st.session_state.last_cap = "Reporte de Campañas"
-            st.session_state.last_ger = None
-            st.rerun()
-
-    with col3:
-        st.markdown("<h1 style='text-align: center; font-size: 3rem;'>📈</h1>", unsafe_allow_html=True)
-        st.markdown("<h4 style='text-align: center; color: #f59e0b; font-weight: bold;'>Dashboard Gerencial</h4>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 14px;'>Métricas, gráficas y KPIs operativos de gerencia.</p>", unsafe_allow_html=True)
-        if st.button("Ir a Dashboard", use_container_width=True, key="btn_ir_dashboard"):
-            # Redirigimos directo. Si no tiene clave, el módulo Dashboard le pedirá ir a la barra lateral
-            st.session_state.vista_actual = "Dashboard"
-            st.session_state.last_ger = "Dashboard"
-            st.session_state.last_cap = None
-            st.rerun()
+    for i, col in enumerate([col1, col2, col3]):
+        with col:
+            # Altura 220 para ser compacto
+            with st.container(height=220, border=True):
+                
+                # Espacio reservado para el emoji (puedes descomentar la línea de abajo cuando quieras)
+                # st.markdown(f"<h1 style='text-align: center; font-size: 2rem;'>{cards[i].get('emoji', '')}</h1>", unsafe_allow_html=True)
+                
+                # Título
+                st.markdown(f"<h4 style='text-align: center; color: {cards[i]['color']}; font-weight: bold; margin-bottom: 5px;'>{cards[i]['title']}</h4>", unsafe_allow_html=True)
+                
+                # Descripción estandarizada
+                st.markdown(f"<p style='text-align: center; color: #94a3b8; font-size: 15px; margin-bottom: 15px;'>{cards[i]['desc']}</p>", unsafe_allow_html=True)
+                
+                # --- AQUÍ ESTÁ EL AJUSTE PARA EL BOTÓN MÁS ESTRECHO ---
+                # Usamos columnas internas [1, 4, 1] para centrar y reducir el ancho
+                _, c_btn, _ = st.columns([1, 4, 1]) 
+                
+                with c_btn:
+                    if st.button(cards[i]['btn_text'], use_container_width=True, key=cards[i]['key']):
+                        st.session_state.vista_actual = cards[i]['vista']
+                        
+                        # Lógica de navegación
+                        if "Gerencial" in cards[i]['title']:
+                            st.session_state.last_ger = cards[i]['vista']
+                            st.session_state.last_cap = None
+                        else:
+                            st.session_state.last_cap = cards[i]['vista']
+                            st.session_state.last_ger = None
+                        st.rerun()
