@@ -19,7 +19,7 @@ def mostrar():
         {
             #"emoji": "📋", # Comentado para activar luego
             "title": "Plataforma de Rutas",
-            "desc": "Completar visitas programadas.",
+            "desc": "Completar y revisar visitas programadas.",
             "btn_text": "Ir a Visitas",
             "key": "btn_ir_visitas",
             "vista": "Plataforma de rutas",
