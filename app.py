@@ -70,7 +70,7 @@ with st.sidebar:
     st.markdown(f"<div style='text-align: center; margin-bottom: 30px;'><img src='{URL_LOGO_REWARDS}' width='100%'></div>", unsafe_allow_html=True)
         
     # --- SECCIÓN CAPACITADOR ---
-    with st.expander("CAPACITADOR", expanded=(st.session_state.vista_actual in ["Plataforma de rutas", "Reporte de Campañas"])):
+    with st.expander("CAPACITACIÓN", expanded=(st.session_state.vista_actual in ["Plataforma de rutas", "Reporte de Campañas"])):
         
         if st.button("Plataforma de rutas", use_container_width=True):
             st.session_state.vista_actual = 'Plataforma de rutas'
