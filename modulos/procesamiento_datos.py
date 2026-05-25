@@ -36,4 +36,9 @@ def procesar_fila(fila, nombre_cap):
     })
     magic_link = f"{URL_BASE_GAS}?{query_params}"
 
-    return pd.Series(['=HYPERLINK(...)', '=HYPERLINK(...)', '=HYPERLINK(...)', maps_url, google_url, magic_link])
+    # --- CORRECCIÓN: Construcción dinámica de fórmulas para Excel ---
+    formula_maps = f'=HYPERLINK("{maps_url}", "Ubicación en Maps")'
+    formula_google = f'=HYPERLINK("{google_url}", "Buscar en Google")'
+    formula_magic = f'=HYPERLINK("{magic_link}", "Reportar Visita")'
+
+    return pd.Series([formula_maps, formula_google, formula_magic, maps_url, google_url, magic_link])
