@@ -65,6 +65,7 @@ html, body, .stApp, h1, h2, h3, h4, h5, h6, p, label, div[data-testid="stMarkdow
     margin: 0 0 5px 0 !important; 
     border-radius: 6px !important; 
     font-weight: normal !important;
+    font-size: 16px !important;           /* <-- AQUI: TAMAÑO PARA LOS BOTONES */
     transition: all 0.2s ease-in-out;
 }
 
@@ -74,6 +75,24 @@ html, body, .stApp, h1, h2, h3, h4, h5, h6, p, label, div[data-testid="stMarkdow
 [data-testid="stSidebar"] [data-testid="stExpanderDetails"] div.stButton > button div,
 [data-testid="stSidebar"] [data-testid="stExpanderDetails"] div.stButton > button p {
     color: #f8fafc !important;
+    font-size: 14px !important;           /* <-- AQUI: TAMAÑO FORZADO AL TEXTO INTERNO */
+}
+
+/* --- FORZAR JUSTIFICADO A LA IZQUIERDA DE LOS TEXTOS INTERNOS --- */
+/* Forzamos a que los contenedores internos (div y span) ocupen todo el ancho y se alineen al inicio */
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] div.stButton > button > div,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] div.stButton > button > div > span,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] div.stButton > button div[data-testid="stMarkdownContainer"] {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    display: flex !important;
+}
+
+/* Alineamos explícitamente el párrafo final a la izquierda */
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] div.stButton > button p {
+    text-align: left !important;
+    width: 100% !important;
+    margin: 0 !important;
 }
 
 

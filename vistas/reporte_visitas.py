@@ -12,7 +12,7 @@ URL_BASE_DATOS_GS = "https://docs.google.com/spreadsheets/d/186GinOg7PgFcp1g9LAm
 def mostrar():
     col_titulo, col_volver = st.columns([4, 1])
     with col_titulo:
-        st.title("Plataforma de rutas inteligentes")
+        st.markdown("<h1 style='font-size: 32px; padding-top: 0rem;'>Plataforma de rutas inteligentes</h1>", unsafe_allow_html=True)
     with col_volver:
         st.write("") # Alineación vertical
         if st.button("← Volver al Inicio", use_container_width=True, key="volver_visitas"):
