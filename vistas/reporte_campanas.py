@@ -1,6 +1,6 @@
 import streamlit as st
 
-URL_BASE_APP_SCRIPT = "https://script.google.com/macros/s/AKfycbw1gfEBB0m6V40Pgm-MT_L100NV0R1qZmte9ZleazWzakcWQzkx-k7J1DLeDlHyzWtsiw/exec" 
+URL_BASE_APP_SCRIPT = "https://script.google.com/macros/s/AKfycbwXPmuxA1pR4Olw4aRcC284MXfiY3pmgtQdb3_UopdW4aD8Nk8uXmzpTdKIEOZEW32sVQ/exec" 
 
 def mostrar():
     col_titulo, col_volver = st.columns([4, 1])
