@@ -3,7 +3,7 @@ import urllib.parse
 import unicodedata
 import re
 
-ID_WEB_APP = "AKfycbw-nRBF0WEhEb7mh7L2-I6tW1EfqorbIm-8QxYu4pQPnuFekJzA13bS1NWMgRioME_IZQ"
+ID_WEB_APP = "AKfycbxxDcdZ8VFlK5nGVT4auoaDOjlh1FUNPht47PskdPcgXYtmMVgmt3Q197OqjAcXLtrR7Q"
 URL_BASE_GAS = f"https://script.google.com/macros/s/{ID_WEB_APP}/exec"
 
 def limpiar(valor):
