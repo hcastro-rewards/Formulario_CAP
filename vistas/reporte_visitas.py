@@ -38,7 +38,16 @@ def mostrar():
                         sheet_id = match.group(1)
                         excel_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=xlsx"
                         try:
-                            st.session_state['dict_hojas'] = pd.read_excel(excel_url, sheet_name=None)
+                            # 1. Descargamos temporalmente los datos
+                            datos_descargados = pd.read_excel(excel_url, sheet_name=None)
+                            
+                            # 2. Buscamos en todas las hojas y forzamos PSI a texto puro
+                            for nombre_hoja, df_hoja in datos_descargados.items():
+                                if 'PSI' in df_hoja.columns:
+                                    datos_descargados[nombre_hoja]['PSI'] = df_hoja['PSI'].astype(str)
+                            
+                            # 3. Guardamos los datos purificados en la sesión
+                            st.session_state['dict_hojas'] = datos_descargados
                             st.rerun() 
                         except Exception as e:
                             st.error(f"Error al descargar datos: {e}")
@@ -83,13 +92,7 @@ def mostrar():
 
             def mostrar_modulo(df_final, titulo):
                 st.markdown(f"<h3 style='color: #38bdf8 !important;'> {titulo}</h3>", unsafe_allow_html=True)
-                # -------------------------------------------------------------
-                # ✨ AQUÍ AGREGAS LA SOLUCIÓN
-                # Verificamos si la columna 'PSI' existe en este DataFrame
-                if 'PSI' in df_final.columns:
-                    # Convertimos toda la columna a texto puro para evitar conflictos con PyArrow
-                    df_final['PSI'] = df_final['PSI'].astype(str)
-                # -------------------------------------------------------------
+                
                 columnas_generadas = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC']
                 df_final[columnas_generadas] = df_final.apply(lambda x: procesar_fila(x, nombre_sel), axis=1)
 
