@@ -38,16 +38,7 @@ def mostrar():
                         sheet_id = match.group(1)
                         excel_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=xlsx"
                         try:
-                            # 1. Descargamos temporalmente los datos
-                            datos_descargados = pd.read_excel(excel_url, sheet_name=None)
-                            
-                            # 2. Buscamos en todas las hojas y forzamos PSI a texto puro
-                            for nombre_hoja, df_hoja in datos_descargados.items():
-                                if 'PSI' in df_hoja.columns:
-                                    datos_descargados[nombre_hoja]['PSI'] = df_hoja['PSI'].astype(str)
-                            
-                            # 3. Guardamos los datos purificados en la sesión
-                            st.session_state['dict_hojas'] = datos_descargados
+                            st.session_state['dict_hojas'] = pd.read_excel(excel_url, sheet_name=None)
                             st.rerun() 
                         except Exception as e:
                             st.error(f"Error al descargar datos: {e}")
