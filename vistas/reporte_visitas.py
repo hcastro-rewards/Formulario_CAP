@@ -83,7 +83,13 @@ def mostrar():
 
             def mostrar_modulo(df_final, titulo):
                 st.markdown(f"<h3 style='color: #38bdf8 !important;'> {titulo}</h3>", unsafe_allow_html=True)
-                
+                # -------------------------------------------------------------
+                # ✨ AQUÍ AGREGAS LA SOLUCIÓN
+                # Verificamos si la columna 'PSI' existe en este DataFrame
+                if 'PSI' in df_final.columns:
+                    # Convertimos toda la columna a texto puro para evitar conflictos con PyArrow
+                    df_final['PSI'] = df_final['PSI'].astype(str)
+                # -------------------------------------------------------------
                 columnas_generadas = ['Link MAPS (Excel)', 'Link GOOGLE (Excel)', 'Auto-Relleno (Excel)', 'URL_MAPS', 'URL_GOOGLE', 'URL_MAGIC']
                 df_final[columnas_generadas] = df_final.apply(lambda x: procesar_fila(x, nombre_sel), axis=1)
 
