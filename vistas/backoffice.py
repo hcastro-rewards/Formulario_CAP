@@ -1,7 +1,7 @@
 import streamlit as st
 
 # Marcador de posición para el enlace de Google Apps Script
-URL_BASE_APP_SCRIPT = "https://script.google.com/" 
+URL_BASE_APP_SCRIPT = "https://script.google.com/macros/s/AKfycby_wgLWvsNvS0Jw-NFt-vWHmb7HEMBgzA_oKdgmJAnCYYxxem-X1UfjQ7ySZJ0NeyET/exec" 
 
 def mostrar():
     col_titulo, col_volver = st.columns([4, 1])
