@@ -25,4 +25,4 @@ def mostrar():
     with col2:
         # Nuevos textos descriptivos y en el botón
         st.info(" Haz clic en el botón inferior para abrir generador de codigos.")
-        st.link_button(" ABRIR GENERARDOR DE CODIGOS", url=URL_BASE_APP_SCRIPT, use_container_width=True)
+        st.link_button(" ABRIR GENERADOR DE CODIGOS", url=URL_BASE_APP_SCRIPT, use_container_width=True)
