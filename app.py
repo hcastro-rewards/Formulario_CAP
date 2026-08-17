@@ -5,7 +5,7 @@ import vistas.reporte_visitas as reporte_visitas
 import vistas.reporte_campanas as reporte_campanas
 import vistas.dashboard as dashboard
 import vistas.metricas as metricas
-import vistas.backoffice as backoffice 
+import vistas.backoffice as herramientas_backoffice 
 
 # --- CONFIGURACIÓN DE PÁGINA Y CSS ---
 st.set_page_config(page_title="Portal Operativo Integrado", layout="wide", initial_sidebar_state="expanded")
@@ -84,10 +84,10 @@ with st.sidebar:
             st.rerun()
 
     # --- SECCIÓN HERRAMIENTAS ---
-    with st.expander("HERRAMIENTAS", expanded=(st.session_state.vista_actual == "Backoffice")):
+    with st.expander("BACKOFFICE", expanded=(st.session_state.vista_actual == "Herramientas Backoffice")):
         
-        if st.button("Backoffice", use_container_width=True):
-            st.session_state.vista_actual = 'Backoffice'
+        if st.button("Herramientas Backoffice", use_container_width=True):
+            st.session_state.vista_actual = 'Herramientas Backoffice'
             st.session_state.cerrar_sidebar = True  
             st.rerun()
 
@@ -114,8 +114,8 @@ elif st.session_state.vista_actual == 'Plataforma de rutas':
     reporte_visitas.mostrar()
 elif st.session_state.vista_actual == 'Reporte de Campañas':
     reporte_campanas.mostrar()
-elif st.session_state.vista_actual == 'Backoffice':
-    backoffice.mostrar()
+elif st.session_state.vista_actual == 'Herramientas Backoffice':
+    herramientas_backoffice.mostrar()
 elif st.session_state.vista_actual == 'Dashboard':
     dashboard.mostrar()
 elif st.session_state.vista_actual == 'Métricas':
