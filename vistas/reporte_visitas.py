@@ -73,7 +73,7 @@ def mostrar():
         with col_f:
             fecha_str = st.selectbox("¿Qué fecha deseas consultar?", options=list(opciones_fechas.keys()), index=None)
         with col_n:
-            nombre_sel = st.selectbox("¿Cuál es tu nombre?", options=["Augusto", "Flor", "Gustavo", "Harold", "Ivan", "Mateo"], index=None)
+            nombre_sel = st.selectbox("¿Cuál es tu nombre?", options=["Augusto", "Flor", "Gustavo", "Harold", "Ivan", "Mateo", "Brayan"], index=None)
 
         if fecha_str and nombre_sel:
             fecha_sel = opciones_fechas[fecha_str]
